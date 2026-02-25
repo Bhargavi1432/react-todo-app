@@ -1,11 +1,21 @@
 import { Routes, Route } from "react-router-dom";
 import Profile from "./pages/Profile";
+import Navbar from "./components/Navbar";
+
+function Dashboard() {
+  return <h1>Todo Dashboard</h1>;
+}
 
 function App() {
   return (
+    <>
+      <Navbar />
+
       <Routes>
-        <Route path="/Profile" element={<Profile />} />
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
+    </>
   );
 }
 
