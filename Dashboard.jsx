@@ -36,19 +36,26 @@ function Dashboard() {
 
       <ul>
         {todos.map(todo => (
-          <li key={todo.id}>
+          <li key={todo.id} style={{ marginTop: "10px" }}>
             <span
-              onClick={() => toggleTodo(todo.id)}
               style={{
                 textDecoration: todo.done ? "line-through" : "none",
-                cursor: "pointer",
                 marginRight: "10px"
               }}
             >
               {todo.text}
             </span>
 
-            <button onClick={() => deleteTodo(todo.id)}>Delete</button>
+            <button onClick={() => toggleTodo(todo.id)}>
+              {todo.done ? "Undo" : "Complete"}
+            </button>
+
+            <button
+              onClick={() => deleteTodo(todo.id)}
+              style={{ marginLeft: "5px" }}
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>
