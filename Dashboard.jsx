@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function Dashboard() {
   const [todos, setTodos] = useState([]);
@@ -22,6 +22,17 @@ function Dashboard() {
       )
     );
   };
+
+useEffect(() => {
+  const storedTodos = JSON.parse(localStorage.getItem("todos"));
+  if (storedTodos) {
+    setTodos(storedTodos);
+  }
+}, []);
+
+useEffect(() => {
+  localStorage.setItem("todos", JSON.stringify(todos));
+}, [todos]);
 
   return (
     <div style={{ padding: "20px" }}>
