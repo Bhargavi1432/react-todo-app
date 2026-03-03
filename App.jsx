@@ -19,3 +19,9 @@ function App() {
 }
 
 export default App;
+
+
+import Login from "./pages/Login";
+
+<Route path="/" element={<Login />} />
+<Route path="/dashboard" element={<Dashboard />} />
