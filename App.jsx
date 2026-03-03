@@ -3,6 +3,7 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Navbar from "./components/Navbar";
 import Users from "./pages/Users";
+import Login from "./pages/Login";
 
 function App() {
   return (
@@ -13,6 +14,8 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/users" element={<Users />} />
+        <Route path="/" element={<Login />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </>
   );
@@ -21,7 +24,3 @@ function App() {
 export default App;
 
 
-import Login from "./pages/Login";
-
-<Route path="/" element={<Login />} />
-<Route path="/dashboard" element={<Dashboard />} />
