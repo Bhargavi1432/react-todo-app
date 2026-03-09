@@ -24,18 +24,4 @@ function App() {
 export default App;
 
 
-import Notification from "./Notification";
-
-function App() {
-  return (
-    <div>
-      <h1>Dashboard</h1>
-
-      <Notification />
-    </div>
-  );
-}
-
-export default App;
-
 
