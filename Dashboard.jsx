@@ -75,22 +75,3 @@ useEffect(() => {
 }
 
 export default Dashboard;
-
-
-import Notification from "../components/Notification";
-
-return (
-  <div>
-
-    <h1>Dashboard</h1>
-
-    <Notification />
-
-    {/* Todo Section */}
-    <input
-      value={input}
-      onChange={(e) => setInput(e.target.value)}
-    />
-
-  </div>
-);
