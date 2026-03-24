@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
+
+// ✅ Correct path
 const { registerUser, loginUser } = require("../controllers/userController");
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 
-module.exports = router;
+module.exports = router; // ✅ VERY IMPORTANT
