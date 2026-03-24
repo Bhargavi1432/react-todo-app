@@ -16,3 +16,23 @@ CREATE TABLE tasks (
   priority VARCHAR(10),
   due_date DATE
 );
+
+
+
+//index.js
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "Bhagi@159",
+  database: "todo_app"
+});
+
+// ✅ ADD THIS BLOCK
+db.connect((err) => {
+  if (err) {
+    console.error("❌ DB Connection Failed:");
+    console.error(err);
+  } else {
+    console.log("✅ MySQL Connected");
+  }
+});
