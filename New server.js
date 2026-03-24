@@ -12,4 +12,13 @@ app.get("/", (req, res) => {
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");
+
+
+
+//connect Routes 
+const userRoutes = require("./routes/userRoutes");
+const taskRoutes = require("./routes/taskRoutes");
+
+app.use("/api/users", userRoutes);
+app.use("/api/tasks", taskRoutes);
 });
