@@ -1,0 +1,59 @@
+// ADD TASK 
+
+
+app.post("/tasks", (req, res) => {
+  const { user_id, title, category, due_date, priority } = req.body;
+
+  db.query(
+    "INSERT INTO tasks (user_id, title, category, due_date, priority) VALUES (?, ?, ?, ?, ?)",
+    [user_id, title, category, due_date, priority],
+    (err, result) => {
+      if (err) return res.send(err);
+      res.send("Task added");
+    }
+  );
+});
+
+
+//GET TASKS 
+
+
+app.get("/tasks/:userId", (req, res) => {
+  const userId = req.params.userId;
+
+  db.query(
+    "SELECT * FROM tasks WHERE user_id = ?",
+    [userId],
+    (err, result) => {
+      if (err) return res.send(err);
+      res.json(result);
+    }
+  );
+});
+
+
+
+//delete and update API
+
+
+// Delete
+app.delete("/tasks/:id", (req, res) => {
+  db.query("DELETE FROM tasks WHERE id = ?", [req.params.id], (err) => {
+    if (err) return res.send(err);
+    res.send("Deleted");
+  });
+});
+
+// Update
+app.put("/tasks/:id", (req, res) => {
+  const { title, category, due_date, priority } = req.body;
+
+  db.query(
+    "UPDATE tasks SET title=?, category=?, due_date=?, priority=? WHERE id=?",
+    [title, category, due_date, priority, req.params.id],
+    (err) => {
+      if (err) return res.send(err);
+      res.send("Updated");
+    }
+  );
+});
