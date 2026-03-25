@@ -39,6 +39,22 @@ app.post("/login", (req, res) => {
   );
 });
 
+// REGISTER API
+app.post("/register", (req, res) => {
+  const { username, password } = req.body;
+
+  db.query(
+    "INSERT INTO users (username, password) VALUES (?, ?)",
+    [username, password],
+    (err, result) => {
+      if (err) {
+        return res.send(err);
+      }
+      res.json({ message: "User registered successfully ✅" });
+    }
+  );
+});
+
 // ➕ ADD TASK
 app.post("/tasks", (req, res) => {
   const { user_id, title, category, priority, due_date } = req.body;
