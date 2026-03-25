@@ -58,12 +58,20 @@ app.post("/register", (req, res) => {
 // ➕ ADD TASK
 app.post("/tasks", (req, res) => {
   const { user_id, title, category, priority, due_date } = req.body;
+  const uid = Number(user_id);
+
+  if (!uid || !title || !category || !priority || !due_date) {
+    return res.status(400).send("All fields are required");
+  }
 
   db.query(
     "INSERT INTO tasks (user_id, title, category, priority, due_date) VALUES (?, ?, ?, ?, ?)",
-    [user_id, title, category, priority, due_date],
+    [uid, title, category, priority, due_date],
     (err) => {
-      if (err) return res.status(500).send(err);
+      if (err) {
+        console.error("Error adding task:", err);
+        return res.status(500).send(err);
+      }
 
       res.send("Task Added");
     }
@@ -72,13 +80,24 @@ app.post("/tasks", (req, res) => {
 
 // 📥 GET TASKS
 app.get("/tasks/:userId", (req, res) => {
-  const userId = Number(req.params.userId); // 🔹 ensure numeric ID
+  console.log("GET /tasks called with userId:", req.params.userId);
+  const userId = Number(req.params.userId);
+
+  if (!userId) {
+    console.log("Invalid userId:", req.params.userId);
+    return res.status(400).send("Invalid userId");
+  }
+
   db.query(
     "SELECT * FROM tasks WHERE user_id=?",
     [userId],
     (err, result) => {
-      if (err) return res.status(500).send(err);
+      if (err) {
+        console.error("MySQL Error fetching tasks:", err);
+        return res.status(500).send(err);
+      }
 
+      console.log("Tasks fetched:", result);
       res.json(result);
     }
   );
@@ -87,10 +106,9 @@ app.get("/tasks/:userId", (req, res) => {
 // ✏️ UPDATE TASK
 app.put("/tasks/:id", (req, res) => {
   const { title, priority, due_date } = req.body;
-  const taskId = Number(req.params.id); // 🔹 ensure numeric ID
+  const taskId = Number(req.params.id);
 
-  // Validate input
-  if (!title || !priority || !due_date) {
+  if (!taskId || !title || !priority || !due_date) {
     return res.status(400).send("All fields are required: title, priority, due_date");
   }
 
@@ -98,12 +116,16 @@ app.put("/tasks/:id", (req, res) => {
     "UPDATE tasks SET title=?, priority=?, due_date=? WHERE id=?",
     [title, priority, due_date, taskId],
     (err, result) => {
-      if (err) return res.status(500).send(err);
+      if (err) {
+        console.error("MySQL Error updating task:", err);
+        return res.status(500).send(err);
+      }
 
       if (result.affectedRows === 0) {
         return res.status(404).send("Task not found");
       }
 
+      console.log(`Task ${taskId} updated successfully`);
       res.send("Updated");
     }
   );
@@ -111,17 +133,23 @@ app.put("/tasks/:id", (req, res) => {
 
 // ❌ DELETE TASK
 app.delete("/tasks/:id", (req, res) => {
-  const taskId = Number(req.params.id); // 🔹 ensure numeric ID
+  const taskId = Number(req.params.id);
+  if (!taskId) return res.status(400).send("Invalid task ID");
+
   db.query(
     "DELETE FROM tasks WHERE id=?",
     [taskId],
     (err, result) => {
-      if (err) return res.status(500).send(err);
+      if (err) {
+        console.error("MySQL Error deleting task:", err);
+        return res.status(500).send(err);
+      }
 
       if (result.affectedRows === 0) {
         return res.status(404).send("Task not found");
       }
 
+      console.log(`Task ${taskId} deleted successfully`);
       res.send("Deleted");
     }
   );
