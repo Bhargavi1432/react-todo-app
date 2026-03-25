@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [editTaskId, setEditTaskId] = useState(null);
   const [editTaskData, setEditTaskData] = useState({
     title: "",
-    category: "", // 🔹 include category
+    category: "",
     priority: "",
     due_date: ""
   });
@@ -28,7 +28,7 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Fetch tasks
+  // Fetch tasks from backend
   const fetchTasks = async (userId) => {
     try {
       const res = await API.get(`/tasks/${Number(userId)}`);
@@ -55,8 +55,9 @@ export default function Dashboard() {
         due_date: due_date.trim()
       });
 
-      // ✅ Add the new task to state without refetching
-      setTasks([...tasks, { ...newTask, id: Date.now(), user_id: user.id }]); // temporary id
+      // 🔹 Fetch all tasks again to get correct IDs
+      fetchTasks(user.id);
+
       setNewTask({ title: "", category: "", priority: "", due_date: "" });
     } catch (error) {
       console.error("Error adding task:", error.response || error);
@@ -80,7 +81,7 @@ export default function Dashboard() {
     setEditTaskId(task.id);
     setEditTaskData({
       title: task.title,
-      category: task.category, // 🔹 include category
+      category: task.category,
       priority: task.priority,
       due_date: task.due_date
     });
@@ -102,14 +103,16 @@ export default function Dashboard() {
     try {
       await API.put(`/tasks/${Number(editTaskId)}`, {
         title: title.trim(),
-        category: category.trim(), // 🔹 include category
+        category: category.trim(),
         priority: priority.trim(),
         due_date: due_date.trim()
       });
 
+      // Update frontend state
       setTasks(tasks.map(t =>
         t.id === editTaskId ? { ...t, title, category, priority, due_date } : t
       ));
+
       cancelEdit();
     } catch (error) {
       console.error("Error updating task:", error.response || error);
@@ -134,30 +137,22 @@ export default function Dashboard() {
                   <input
                     type="text"
                     value={editTaskData.title}
-                    onChange={(e) =>
-                      setEditTaskData({ ...editTaskData, title: e.target.value })
-                    }
+                    onChange={(e) => setEditTaskData({ ...editTaskData, title: e.target.value })}
                   />
                   <input
                     type="text"
-                    value={editTaskData.category} // 🔹 editable category
-                    onChange={(e) =>
-                      setEditTaskData({ ...editTaskData, category: e.target.value })
-                    }
+                    value={editTaskData.category}
+                    onChange={(e) => setEditTaskData({ ...editTaskData, category: e.target.value })}
                   />
                   <input
                     type="text"
                     value={editTaskData.priority}
-                    onChange={(e) =>
-                      setEditTaskData({ ...editTaskData, priority: e.target.value })
-                    }
+                    onChange={(e) => setEditTaskData({ ...editTaskData, priority: e.target.value })}
                   />
                   <input
                     type="date"
                     value={editTaskData.due_date}
-                    onChange={(e) =>
-                      setEditTaskData({ ...editTaskData, due_date: e.target.value })
-                    }
+                    onChange={(e) => setEditTaskData({ ...editTaskData, due_date: e.target.value })}
                   />
                   <button onClick={saveEditTask}>Save</button>
                   <button onClick={cancelEdit}>Cancel</button>
