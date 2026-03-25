@@ -17,6 +17,7 @@ export default function Dashboard() {
     due_date: ""
   });
 
+  // Load user and fetch tasks
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -26,12 +27,10 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Fetch tasks for user
+  // Fetch tasks
   const fetchTasks = async (userId) => {
-    console.log("Fetching tasks for userId:", userId);
     try {
       const res = await API.get(`/tasks/${Number(userId)}`);
-      console.log("Tasks fetched:", res.data);
       setTasks(res.data);
     } catch (error) {
       console.error("Error fetching tasks:", error.response || error);
@@ -41,21 +40,22 @@ export default function Dashboard() {
 
   // Add task
   const handleAddTask = async () => {
-    if (!newTask.title || !newTask.category || !newTask.priority || !newTask.due_date) {
+    const { title, category, priority, due_date } = newTask;
+    if (!title || !category || !priority || !due_date) {
       alert("Please fill all fields");
       return;
     }
-
     try {
-      await API.post("/tasks", {
+      const res = await API.post("/tasks", {
         user_id: Number(user.id),
-        title: newTask.title,
-        category: newTask.category,
-        priority: newTask.priority,
-        due_date: newTask.due_date.trim()
+        title, category, priority, due_date: due_date.trim()
       });
-      setNewTask({ title: "", category: "", priority: "", due_date: "" });
-      fetchTasks(user.id);
+      if (res.data.success) {
+        setNewTask({ title: "", category: "", priority: "", due_date: "" });
+        fetchTasks(user.id);
+      } else {
+        alert("Failed to add task");
+      }
     } catch (error) {
       console.error("Error adding task:", error.response || error);
       alert("Failed to add task");
@@ -65,8 +65,12 @@ export default function Dashboard() {
   // Delete task
   const handleDeleteTask = async (taskId) => {
     try {
-      await API.delete(`/tasks/${Number(taskId)}`);
-      fetchTasks(user.id);
+      const res = await API.delete(`/tasks/${Number(taskId)}`);
+      if (res.data.success) {
+        setTasks(tasks.filter(t => t.id !== taskId));
+      } else {
+        alert("Failed to delete task");
+      }
     } catch (error) {
       console.error("Error deleting task:", error.response || error);
       alert("Failed to delete task");
@@ -76,11 +80,7 @@ export default function Dashboard() {
   // Start editing a task
   const startEditTask = (task) => {
     setEditTaskId(task.id);
-    setEditTaskData({
-      title: task.title,
-      priority: task.priority,
-      due_date: task.due_date
-    });
+    setEditTaskData({ title: task.title, priority: task.priority, due_date: task.due_date });
   };
 
   // Cancel editing
@@ -89,23 +89,26 @@ export default function Dashboard() {
     setEditTaskData({ title: "", priority: "", due_date: "" });
   };
 
-  // Save edited task
+  // Save edited task ✅
   const saveEditTask = async () => {
     const { title, priority, due_date } = editTaskData;
     if (!title || !priority || !due_date) {
       alert("Please fill all fields");
       return;
     }
-
     try {
-      await API.put(`/tasks/${Number(editTaskId)}`, {
-        title,
-        priority,
+      const res = await API.put(`/tasks/${Number(editTaskId)}`, {
+        title: title.trim(),
+        priority: priority.trim(),
         due_date: due_date.trim()
       });
-      setEditTaskId(null);
-      setEditTaskData({ title: "", priority: "", due_date: "" });
-      fetchTasks(user.id);
+
+      if (res.data.success) {
+        setTasks(tasks.map(t => t.id === editTaskId ? { ...t, title, priority, due_date } : t));
+        cancelEdit();
+      } else {
+        alert("Failed to update task: " + (res.data.message || "Unknown error"));
+      }
     } catch (error) {
       console.error("Error updating task:", error.response || error);
       alert("Failed to update task");
@@ -127,10 +130,12 @@ export default function Dashboard() {
               {editTaskId === task.id ? (
                 <>
                   <input
+                    type="text"
                     value={editTaskData.title}
                     onChange={(e) => setEditTaskData({ ...editTaskData, title: e.target.value })}
                   />
                   <input
+                    type="text"
                     value={editTaskData.priority}
                     onChange={(e) => setEditTaskData({ ...editTaskData, priority: e.target.value })}
                   />
