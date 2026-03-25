@@ -26,9 +26,12 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Fetch tasks for user
   const fetchTasks = async (userId) => {
+    console.log("Fetching tasks for userId:", userId);
     try {
-      const res = await API.get(`/tasks/${userId}`);
+      const res = await API.get(`/tasks/${Number(userId)}`);
+      console.log("Tasks fetched:", res.data);
       setTasks(res.data);
     } catch (error) {
       console.error("Error fetching tasks:", error.response || error);
@@ -36,7 +39,7 @@ export default function Dashboard() {
     }
   };
 
-  // 🔹 Add Task
+  // Add task
   const handleAddTask = async () => {
     if (!newTask.title || !newTask.category || !newTask.priority || !newTask.due_date) {
       alert("Please fill all fields");
@@ -45,8 +48,10 @@ export default function Dashboard() {
 
     try {
       await API.post("/tasks", {
-        ...newTask,
         user_id: Number(user.id),
+        title: newTask.title,
+        category: newTask.category,
+        priority: newTask.priority,
         due_date: newTask.due_date.trim()
       });
       setNewTask({ title: "", category: "", priority: "", due_date: "" });
@@ -57,10 +62,10 @@ export default function Dashboard() {
     }
   };
 
-  // 🔹 Delete Task
+  // Delete task
   const handleDeleteTask = async (taskId) => {
     try {
-      await API.delete(`/tasks/${taskId}`);
+      await API.delete(`/tasks/${Number(taskId)}`);
       fetchTasks(user.id);
     } catch (error) {
       console.error("Error deleting task:", error.response || error);
@@ -68,7 +73,7 @@ export default function Dashboard() {
     }
   };
 
-  // 🔹 Start editing task
+  // Start editing a task
   const startEditTask = (task) => {
     setEditTaskId(task.id);
     setEditTaskData({
@@ -78,23 +83,25 @@ export default function Dashboard() {
     });
   };
 
-  // 🔹 Cancel editing
+  // Cancel editing
   const cancelEdit = () => {
     setEditTaskId(null);
     setEditTaskData({ title: "", priority: "", due_date: "" });
   };
 
-  // 🔹 Save edited task
+  // Save edited task
   const saveEditTask = async () => {
-    if (!editTaskData.title || !editTaskData.priority || !editTaskData.due_date) {
+    const { title, priority, due_date } = editTaskData;
+    if (!title || !priority || !due_date) {
       alert("Please fill all fields");
       return;
     }
 
     try {
-      await API.put(`/tasks/${editTaskId}`, {
-        ...editTaskData,
-        due_date: editTaskData.due_date.trim()
+      await API.put(`/tasks/${Number(editTaskId)}`, {
+        title,
+        priority,
+        due_date: due_date.trim()
       });
       setEditTaskId(null);
       setEditTaskData({ title: "", priority: "", due_date: "" });
@@ -147,7 +154,7 @@ export default function Dashboard() {
         </ul>
       )}
 
-      {/* 🔹 Add Task Form */}
+      {/* Add Task Form */}
       <div style={{ marginTop: "40px" }}>
         <h3>Add New Task</h3>
         <input
@@ -169,7 +176,6 @@ export default function Dashboard() {
         />
         <br /><br />
         <input
-          placeholder="Due Date (YYYY-MM-DD)"
           type="date"
           value={newTask.due_date}
           onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
