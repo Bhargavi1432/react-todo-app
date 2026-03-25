@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [editTaskId, setEditTaskId] = useState(null);
   const [editTaskData, setEditTaskData] = useState({
     title: "",
+    category: "", // 🔹 include category
     priority: "",
     due_date: ""
   });
@@ -46,16 +47,17 @@ export default function Dashboard() {
       return;
     }
     try {
-      const res = await API.post("/tasks", {
+      await API.post("/tasks", {
         user_id: Number(user.id),
-        title, category, priority, due_date: due_date.trim()
+        title,
+        category,
+        priority,
+        due_date: due_date.trim()
       });
-      if (res.data.success) {
-        setNewTask({ title: "", category: "", priority: "", due_date: "" });
-        fetchTasks(user.id);
-      } else {
-        alert("Failed to add task");
-      }
+
+      // ✅ Add the new task to state without refetching
+      setTasks([...tasks, { ...newTask, id: Date.now(), user_id: user.id }]); // temporary id
+      setNewTask({ title: "", category: "", priority: "", due_date: "" });
     } catch (error) {
       console.error("Error adding task:", error.response || error);
       alert("Failed to add task");
@@ -65,12 +67,8 @@ export default function Dashboard() {
   // Delete task
   const handleDeleteTask = async (taskId) => {
     try {
-      const res = await API.delete(`/tasks/${Number(taskId)}`);
-      if (res.data.success) {
-        setTasks(tasks.filter(t => t.id !== taskId));
-      } else {
-        alert("Failed to delete task");
-      }
+      await API.delete(`/tasks/${Number(taskId)}`);
+      setTasks(tasks.filter(t => t.id !== taskId));
     } catch (error) {
       console.error("Error deleting task:", error.response || error);
       alert("Failed to delete task");
@@ -80,35 +78,39 @@ export default function Dashboard() {
   // Start editing a task
   const startEditTask = (task) => {
     setEditTaskId(task.id);
-    setEditTaskData({ title: task.title, priority: task.priority, due_date: task.due_date });
+    setEditTaskData({
+      title: task.title,
+      category: task.category, // 🔹 include category
+      priority: task.priority,
+      due_date: task.due_date
+    });
   };
 
   // Cancel editing
   const cancelEdit = () => {
     setEditTaskId(null);
-    setEditTaskData({ title: "", priority: "", due_date: "" });
+    setEditTaskData({ title: "", category: "", priority: "", due_date: "" });
   };
 
-  // Save edited task ✅
+  // Save edited task
   const saveEditTask = async () => {
-    const { title, priority, due_date } = editTaskData;
-    if (!title || !priority || !due_date) {
+    const { title, category, priority, due_date } = editTaskData;
+    if (!title || !category || !priority || !due_date) {
       alert("Please fill all fields");
       return;
     }
     try {
-      const res = await API.put(`/tasks/${Number(editTaskId)}`, {
+      await API.put(`/tasks/${Number(editTaskId)}`, {
         title: title.trim(),
+        category: category.trim(), // 🔹 include category
         priority: priority.trim(),
         due_date: due_date.trim()
       });
 
-      if (res.data.success) {
-        setTasks(tasks.map(t => t.id === editTaskId ? { ...t, title, priority, due_date } : t));
-        cancelEdit();
-      } else {
-        alert("Failed to update task: " + (res.data.message || "Unknown error"));
-      }
+      setTasks(tasks.map(t =>
+        t.id === editTaskId ? { ...t, title, category, priority, due_date } : t
+      ));
+      cancelEdit();
     } catch (error) {
       console.error("Error updating task:", error.response || error);
       alert("Failed to update task");
@@ -132,17 +134,30 @@ export default function Dashboard() {
                   <input
                     type="text"
                     value={editTaskData.title}
-                    onChange={(e) => setEditTaskData({ ...editTaskData, title: e.target.value })}
+                    onChange={(e) =>
+                      setEditTaskData({ ...editTaskData, title: e.target.value })
+                    }
+                  />
+                  <input
+                    type="text"
+                    value={editTaskData.category} // 🔹 editable category
+                    onChange={(e) =>
+                      setEditTaskData({ ...editTaskData, category: e.target.value })
+                    }
                   />
                   <input
                     type="text"
                     value={editTaskData.priority}
-                    onChange={(e) => setEditTaskData({ ...editTaskData, priority: e.target.value })}
+                    onChange={(e) =>
+                      setEditTaskData({ ...editTaskData, priority: e.target.value })
+                    }
                   />
                   <input
                     type="date"
                     value={editTaskData.due_date}
-                    onChange={(e) => setEditTaskData({ ...editTaskData, due_date: e.target.value })}
+                    onChange={(e) =>
+                      setEditTaskData({ ...editTaskData, due_date: e.target.value })
+                    }
                   />
                   <button onClick={saveEditTask}>Save</button>
                   <button onClick={cancelEdit}>Cancel</button>
