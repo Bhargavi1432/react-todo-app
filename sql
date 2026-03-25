@@ -17,22 +17,13 @@ CREATE TABLE tasks (
   due_date DATE
 );
 
+CREATE TABLE IF NOT EXISTS tasks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  category VARCHAR(255) NOT NULL,
+  priority VARCHAR(50) NOT NULL,
+  due_date DATE NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
-
-//index.js
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "Bhagi@159",
-  database: "todo_app"
-});
-
-// ✅ ADD THIS BLOCK
-db.connect((err) => {
-  if (err) {
-    console.error("❌ DB Connection Failed:");
-    console.error(err);
-  } else {
-    console.log("✅ MySQL Connected");
-  }
-});
