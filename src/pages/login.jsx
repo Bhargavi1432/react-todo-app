@@ -7,25 +7,43 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    const res = await API.post("/login", user);
+    if (!user.username || !user.password) {
+      alert("Please fill all fields");
+      return;
+    }
 
-    if (res.data.success) {
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      navigate("/dashboard");
-    } else {
-      alert("Invalid login");
+    try {
+      const res = await API.post("/login", user);
+
+      if (res.data.success) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        navigate("/dashboard"); // redirect to placeholder
+      } else {
+        alert("Invalid login");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Server error");
     }
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      <input placeholder="Username"
+    <div style={{ textAlign: "center", marginTop: "100px" }}>
+      <h2>Login Page</h2>
+
+      <input
+        placeholder="Username"
         onChange={(e) => setUser({ ...user, username: e.target.value })}
       />
-      <input placeholder="Password" type="password"
+      <br /><br />
+
+      <input
+        placeholder="Password"
+        type="password"
         onChange={(e) => setUser({ ...user, password: e.target.value })}
       />
+      <br /><br />
+
       <button onClick={handleLogin}>Login</button>
     </div>
   );
