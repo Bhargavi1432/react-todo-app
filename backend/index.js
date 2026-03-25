@@ -6,41 +6,52 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔹 MySQL Connection
+// 🔹 MySQL connection
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "YOUR_PASSWORD",
+  password: "YOUR_PASSWORD", // replace with your MySQL password
   database: "todo_app"
 });
 
-db.connect(err => {
-  if (err) return console.error("❌ DB Connection Failed:", err);
-  console.log("✅ MySQL Connected");
+db.connect((err) => {
+  if (err) {
+    console.error("❌ DB Connection Failed:", err);
+  } else {
+    console.log("✅ MySQL Connected");
+  }
 });
 
 // 🔐 LOGIN
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
+
   db.query(
     "SELECT * FROM users WHERE username=? AND password=?",
     [username, password],
     (err, result) => {
-      if (err) return res.status(500).json({ success: false, error: err });
-      res.json(result.length > 0 ? { success: true, user: result[0] } : { success: false });
+      if (err) return res.status(500).json(err);
+
+      if (result.length > 0) {
+        res.json({ success: true, user: result[0] });
+      } else {
+        res.json({ success: false });
+      }
     }
   );
 });
 
-// 📝 REGISTER
+// REGISTER
 app.post("/register", (req, res) => {
   const { username, password } = req.body;
+
   db.query(
     "INSERT INTO users (username, password) VALUES (?, ?)",
     [username, password],
-    err => {
-      if (err) return res.status(500).json({ success: false, error: err });
-      res.json({ success: true, message: "User registered ✅" });
+    (err) => {
+      if (err) return res.status(500).send(err);
+
+      res.json({ message: "User registered ✅" });
     }
   );
 });
@@ -48,66 +59,66 @@ app.post("/register", (req, res) => {
 // ➕ ADD TASK
 app.post("/tasks", (req, res) => {
   const { user_id, title, category, priority, due_date } = req.body;
-  if (!user_id || !title || !category || !priority || !due_date)
-    return res.status(400).json({ success: false, message: "All fields are required" });
 
   db.query(
     "INSERT INTO tasks (user_id, title, category, priority, due_date) VALUES (?, ?, ?, ?, ?)",
-    [Number(user_id), title, category, priority, due_date],
-    err => {
-      if (err) return res.status(500).json({ success: false, error: err });
-      res.json({ success: true, message: "Task added ✅" });
+    [user_id, title, category, priority, due_date],
+    (err) => {
+      if (err) return res.status(500).send(err);
+
+      res.json({ success: true, message: "Task Added" });
     }
   );
 });
 
 // 📥 GET TASKS
 app.get("/tasks/:userId", (req, res) => {
-  const userId = Number(req.params.userId);
-  if (!userId) return res.status(400).json({ success: false, message: "Invalid userId" });
-
   db.query(
     "SELECT * FROM tasks WHERE user_id=?",
-    [userId],
+    [req.params.userId],
     (err, result) => {
-      if (err) return res.status(500).json({ success: false, error: err });
+      if (err) return res.status(500).send(err);
+
       res.json(result);
     }
   );
 });
 
-// ✏️ UPDATE TASK
+// ✏️ UPDATE TASK (✅ updated to include category)
 app.put("/tasks/:id", (req, res) => {
-  const taskId = Number(req.params.id);
-  const { title, priority, due_date } = req.body;
-  if (!taskId || !title || !priority || !due_date)
-    return res.status(400).json({ success: false, message: "All fields required" });
-
-  // Ensure due_date format works for MySQL DATE/DATETIME
-  const formattedDueDate = due_date.length === 10 ? due_date + " 00:00:00" : due_date;
+  const { title, category, priority, due_date } = req.body;
 
   db.query(
-    "UPDATE tasks SET title=?, priority=?, due_date=? WHERE id=?",
-    [title, priority, formattedDueDate, taskId],
+    "UPDATE tasks SET title=?, category=?, priority=?, due_date=? WHERE id=?",
+    [title, category, priority, due_date, req.params.id],
     (err, result) => {
-      if (err) return res.status(500).json({ success: false, error: err });
-      if (result.affectedRows === 0) return res.status(404).json({ success: false, message: "Task not found" });
-      res.json({ success: true, message: "Task updated ✅" });
+      if (err) return res.status(500).send(err);
+
+      if (result.affectedRows > 0) {
+        res.json({ success: true, message: "Task Updated" });
+      } else {
+        res.json({ success: false, message: "Task not found" });
+      }
     }
   );
 });
 
 // ❌ DELETE TASK
 app.delete("/tasks/:id", (req, res) => {
-  const taskId = Number(req.params.id);
-  if (!taskId) return res.status(400).json({ success: false, message: "Invalid task ID" });
+  db.query(
+    "DELETE FROM tasks WHERE id=?",
+    [req.params.id],
+    (err, result) => {
+      if (err) return res.status(500).send(err);
 
-  db.query("DELETE FROM tasks WHERE id=?", [taskId], (err, result) => {
-    if (err) return res.status(500).json({ success: false, error: err });
-    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: "Task not found" });
-    res.json({ success: true, message: "Task deleted ✅" });
-  });
+      if (result.affectedRows > 0) {
+        res.json({ success: true, message: "Task Deleted" });
+      } else {
+        res.json({ success: false, message: "Task not found" });
+      }
+    }
+  );
 });
 
-// 🔹 Start server
+// Start server
 app.listen(5000, () => console.log("🚀 Server running on port 5000"));
