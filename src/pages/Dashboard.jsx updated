@@ -44,20 +44,23 @@ export default function Dashboard() {
     }
   };
 
-  // 🔹 Update task (FIXED)
+  // 🔹 UPDATE TASK (✅ FIXED PROPERLY)
   const handleUpdateTask = async (task) => {
-    const title = prompt("Enter new title", task.title);
-    const priority = prompt("Enter priority", task.priority);
-    const due_date = prompt("Enter due date (YYYY-MM-DD)", task.due_date);
-
-    if (!title) return;
+    const title = prompt("Enter new title", task.title) || task.title;
+    const category = prompt("Enter category", task.category) || task.category;
+    const priority = prompt("Enter priority", task.priority) || task.priority;
+    const due_date =
+      prompt("Enter due date (YYYY-MM-DD)", task.due_date) || task.due_date;
 
     try {
       await API.put(`/tasks/${task.id}`, {
         title,
+        category,
         priority,
         due_date
       });
+
+      alert("Task updated ✅");
       fetchTasks();
     } catch (error) {
       console.error(error);
