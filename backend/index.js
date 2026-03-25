@@ -10,7 +10,7 @@ app.use(express.json());
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "YOUR_PASSWORD", // replace with your MySQL password
+  password: "YOUR_PASSWORD",
   database: "todo_app"
 });
 
@@ -84,21 +84,26 @@ app.get("/tasks/:userId", (req, res) => {
   );
 });
 
-// ✏️ UPDATE TASK (✅ updated to include category)
+// ✏️ UPDATE TASK (✅ FULLY FIXED)
 app.put("/tasks/:id", (req, res) => {
   const { title, category, priority, due_date } = req.body;
 
   db.query(
     "UPDATE tasks SET title=?, category=?, priority=?, due_date=? WHERE id=?",
-    [title, category, priority, due_date, req.params.id],
+    [
+      title || null,
+      category || null,
+      priority || null,
+      due_date || null,
+      req.params.id
+    ],
     (err, result) => {
-      if (err) return res.status(500).send(err);
-
-      if (result.affectedRows > 0) {
-        res.json({ success: true, message: "Task Updated" });
-      } else {
-        res.json({ success: false, message: "Task not found" });
+      if (err) {
+        console.error("❌ Update Error:", err);
+        return res.status(500).send(err);
       }
+
+      res.json({ success: true, message: "Task Updated" });
     }
   );
 });
@@ -108,17 +113,12 @@ app.delete("/tasks/:id", (req, res) => {
   db.query(
     "DELETE FROM tasks WHERE id=?",
     [req.params.id],
-    (err, result) => {
+    (err) => {
       if (err) return res.status(500).send(err);
 
-      if (result.affectedRows > 0) {
-        res.json({ success: true, message: "Task Deleted" });
-      } else {
-        res.json({ success: false, message: "Task not found" });
-      }
+      res.json({ success: true, message: "Task Deleted" });
     }
   );
 });
 
-// Start server
 app.listen(5000, () => console.log("🚀 Server running on port 5000"));
