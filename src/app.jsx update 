@@ -1,18 +1,14 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
 
 function App() {
-  const user = JSON.parse(localStorage.getItem("user"));
-
   return (
     <Routes>
+      {/* Login page */}
       <Route path="/" element={<Login />} />
-      
-      <Route
-        path="/dashboard"
-        element={user ? <Dashboard /> : <Navigate to="/" />}
-      />
+
+      {/* Placeholder for Dashboard page */}
+      <Route path="/dashboard" element={<h1>Dashboard (Coming Soon)</h1>} />
     </Routes>
   );
 }
