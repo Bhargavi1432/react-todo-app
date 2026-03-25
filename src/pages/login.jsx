@@ -27,6 +27,10 @@ export default function Login() {
         onChange={(e) => setUser({ ...user, password: e.target.value })}
       />
       <button onClick={handleLogin}>Login</button>
+
+<p onClick={() => navigate("/register")}>
+  New user? Register here
+</p>
     </div>
   );
 }
