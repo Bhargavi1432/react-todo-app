@@ -17,7 +17,7 @@ export default function Login() {
 
       if (res.data.success) {
         localStorage.setItem("user", JSON.stringify(res.data.user));
-        navigate("/dashboard");
+        navigate("/dashboard"); // redirect to placeholder
       } else {
         alert("Invalid login");
       }
@@ -29,22 +29,18 @@ export default function Login() {
 
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h2>Login</h2>
+      <h2>Login Page</h2>
 
       <input
         placeholder="Username"
-        onChange={(e) =>
-          setUser({ ...user, username: e.target.value })
-        }
+        onChange={(e) => setUser({ ...user, username: e.target.value })}
       />
       <br /><br />
 
       <input
         placeholder="Password"
         type="password"
-        onChange={(e) =>
-          setUser({ ...user, password: e.target.value })
-        }
+        onChange={(e) => setUser({ ...user, password: e.target.value })}
       />
       <br /><br />
 
