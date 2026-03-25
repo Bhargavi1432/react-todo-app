@@ -4,38 +4,32 @@ import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [user, setUser] = useState({ username: "", password: "" });
-  const [isRegister, setIsRegister] = useState(false); // NEW
   const navigate = useNavigate();
 
-  // 🔐 LOGIN
   const handleLogin = async () => {
-    const res = await API.post("/login", user);
-
-    if (res.data.success) {
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      navigate("/dashboard");
-    } else {
-      alert("Invalid login");
+    if (!user.username || !user.password) {
+      alert("Please fill all fields");
+      return;
     }
-  };
 
-  // 📝 REGISTER (NEW)
-  const handleRegister = async () => {
     try {
-      await API.post("/register", user);
-      alert("Registered successfully ✅");
+      const res = await API.post("/login", user);
 
-      // switch back to login
-      setIsRegister(false);
-    } catch (err) {
-      console.log(err);
-      alert("Registration failed ❌");
+      if (res.data.success) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        navigate("/dashboard");
+      } else {
+        alert("Invalid login");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Server error");
     }
   };
 
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h2>{isRegister ? "Register" : "Login"}</h2>
+      <h2>Login</h2>
 
       <input
         placeholder="Username"
@@ -54,22 +48,7 @@ export default function Login() {
       />
       <br /><br />
 
-      {/* Button changes */}
-      {isRegister ? (
-        <button onClick={handleRegister}>Register</button>
-      ) : (
-        <button onClick={handleLogin}>Login</button>
-      )}
-
-      <br /><br />
-
-      {/* Toggle */}
-      <p>
-        {isRegister ? "Already have an account?" : "New user?"}
-        <button onClick={() => setIsRegister(!isRegister)}>
-          {isRegister ? "Login here" : "Register here"}
-        </button>
-      </p>
+      <button onClick={handleLogin}>Login</button>
     </div>
   );
 }
