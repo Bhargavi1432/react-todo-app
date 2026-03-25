@@ -10,7 +10,7 @@ export default function Dashboard() {
     due_date: ""
   });
 
-  const user = JSON.parse(localStorage.getItem("user")); // logged-in user
+  const user = JSON.parse(localStorage.getItem("user"));
 
   // 🔹 Fetch tasks
   const fetchTasks = async () => {
@@ -37,20 +37,27 @@ export default function Dashboard() {
     try {
       await API.post("/tasks", { user_id: user.id, ...newTask });
       setNewTask({ title: "", category: "", priority: "", due_date: "" });
-      fetchTasks(); // refresh
+      fetchTasks();
     } catch (error) {
       console.error(error);
       alert("Error adding task");
     }
   };
 
-  // 🔹 Update task
-  const handleUpdateTask = async (taskId) => {
-    const title = prompt("Enter new title");
+  // 🔹 Update task (FIXED)
+  const handleUpdateTask = async (task) => {
+    const title = prompt("Enter new title", task.title);
+    const priority = prompt("Enter priority", task.priority);
+    const due_date = prompt("Enter due date (YYYY-MM-DD)", task.due_date);
+
     if (!title) return;
 
     try {
-      await API.put(`/tasks/${taskId}`, { title, priority: "", due_date: "" });
+      await API.put(`/tasks/${task.id}`, {
+        title,
+        priority,
+        due_date
+      });
       fetchTasks();
     } catch (error) {
       console.error(error);
@@ -75,6 +82,7 @@ export default function Dashboard() {
     <div style={{ padding: "20px" }}>
       <h2>Welcome, {user.username}</h2>
 
+      {/* ➕ Add Task */}
       <h3>Add New Task</h3>
       <input
         placeholder="Title"
@@ -98,13 +106,26 @@ export default function Dashboard() {
       />
       <button onClick={handleAddTask}>Add Task</button>
 
+      {/* 📋 Task List */}
       <h3>Your Tasks</h3>
       <ul>
         {tasks.map((task) => (
           <li key={task.id} style={{ marginBottom: "10px" }}>
             <strong>{task.title}</strong> | {task.category} | {task.priority} | {task.due_date}
-            <button onClick={() => handleUpdateTask(task.id)} style={{ marginLeft: "10px" }}>Edit</button>
-            <button onClick={() => handleDeleteTask(task.id)} style={{ marginLeft: "5px" }}>Delete</button>
+
+            <button
+              onClick={() => handleUpdateTask(task)}
+              style={{ marginLeft: "10px" }}
+            >
+              Edit
+            </button>
+
+            <button
+              onClick={() => handleDeleteTask(task.id)}
+              style={{ marginLeft: "5px" }}
+            >
+              Delete
+            </button>
           </li>
         ))}
       </ul>
