@@ -6,10 +6,6 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("all");
 
-  // ✅ New states for tick & cross
-  const [completedTasks, setCompletedTasks] = useState([]);
-  const [deletedTasks, setDeletedTasks] = useState([]);
-
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [newTask, setNewTask] = useState({
@@ -41,10 +37,28 @@ export default function Dashboard() {
         user_id: user.id
       });
 
-      getTasks(); // refresh tasks
+      getTasks();
     } catch (err) {
       console.error(err);
     }
+  };
+
+  // ✅ Mark Completed
+  const markCompleted = async (id) => {
+    await API.put(`/tasks/status/${id}`, { status: "completed" });
+    getTasks();
+  };
+
+  // ❌ Strike Task (soft delete)
+  const strikeTask = async (id) => {
+    await API.put(`/tasks/delete/${id}`);
+    getTasks();
+  };
+
+  // 🗑 Permanent Delete
+  const deleteTask = async (id) => {
+    await API.delete(`/tasks/permanent/${id}`);
+    getTasks();
   };
 
   // 🔹 Filter logic
@@ -55,13 +69,10 @@ export default function Dashboard() {
 
   return (
     <div>
-      {/* ✅ Navbar */}
       <Navbar setFilter={setFilter} />
 
       <div style={{ padding: "20px" }}>
-        {/* ❌ Removed Dashboard Title */}
-
-        {/* ➕ Add Task Section */}
+        {/* Add Task */}
         <input
           placeholder="Title"
           value={newTask.title}
@@ -101,53 +112,34 @@ export default function Dashboard() {
 
         <hr />
 
-        {/* 📋 Task List */}
-        {filteredTasks.map((task) => {
-          const isCompleted = completedTasks.includes(task.id);
-          const isDeleted = deletedTasks.includes(task.id);
+        {/* Task List */}
+        {filteredTasks.map((task) => (
+          <div
+            key={task.id}
+            style={{
+              margin: "10px 0",
+              textDecoration:
+                task.status === "deleted" ? "line-through" : "none"
+            }}
+          >
+            <b>{task.title}</b> ({task.category}) - {task.priority}
+            <br />
+            Due: {task.due_date}
 
-          return (
-            <div
-              key={task.id}
-              style={{
-                margin: "10px 0",
-                textDecoration: isDeleted ? "line-through" : "none",
-                opacity: isDeleted ? 0.5 : 1
-              }}
-            >
-              <b>{task.title}</b> ({task.category}) - {task.priority}
-              <br />
-              Due: {task.due_date}
+            {/* Completed */}
+            {task.status === "completed" && (
+              <span style={{ color: "green", marginLeft: "10px" }}>
+                ✅ Completed
+              </span>
+            )}
 
-              {/* ✅ Completed Label */}
-              {isCompleted && (
-                <span style={{ color: "green", marginLeft: "10px" }}>
-                  ✅ Completed
-                </span>
-              )}
+            <br />
 
-              <br />
-
-              {/* ✔ Tick Button */}
-              <button
-                onClick={() =>
-                  setCompletedTasks([...completedTasks, task.id])
-                }
-              >
-                ✔
-              </button>
-
-              {/* ❌ Cross Button */}
-              <button
-                onClick={() =>
-                  setDeletedTasks([...deletedTasks, task.id])
-                }
-              >
-                ❌
-              </button>
-            </div>
-          );
-        })}
+            <button onClick={() => markCompleted(task.id)}>✔</button>
+            <button onClick={() => strikeTask(task.id)}>❌</button>
+            <button onClick={() => deleteTask(task.id)}>🗑</button>
+          </div>
+        ))}
       </div>
     </div>
   );
