@@ -27,3 +27,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+
+ALTER TABLE tasks 
+ADD status VARCHAR(20) DEFAULT 'pending',
+ADD is_deleted TINYINT(1) DEFAULT 0;
