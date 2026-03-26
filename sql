@@ -51,3 +51,9 @@ VALUES
 UPDATE tasks 
 SET status = 'pending', is_deleted = 0
 WHERE status IS NULL;
+
+
+
+ALTER TABLE tasks 
+ADD COLUMN status VARCHAR(20) DEFAULT 'pending',
+ADD COLUMN is_deleted TINYINT(1) DEFAULT 0;
