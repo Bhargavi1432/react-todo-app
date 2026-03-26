@@ -6,10 +6,6 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("all");
 
-  // ✅ New states for tick & cross
-  const [completedTasks, setCompletedTasks] = useState([]);
-  const [deletedTasks, setDeletedTasks] = useState([]);
-
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [newTask, setNewTask] = useState({
@@ -21,33 +17,43 @@ export default function Dashboard() {
 
   // 🔹 Fetch tasks
   const getTasks = async () => {
-    try {
-      const res = await API.get(`/tasks/${user.id}`);
-      setTasks(res.data);
-    } catch (err) {
-      console.error(err);
-    }
+    const res = await API.get(`/tasks/${user.id}`);
+    setTasks(res.data);
   };
 
   useEffect(() => {
     getTasks();
   }, []);
 
-  // 🔹 Add task
+  // ➕ Add task
   const addTask = async () => {
-    try {
-      await API.post("/tasks", {
-        ...newTask,
-        user_id: user.id
-      });
+    await API.post("/tasks", {
+      ...newTask,
+      user_id: user.id
+    });
 
-      getTasks(); // refresh tasks
-    } catch (err) {
-      console.error(err);
-    }
+    getTasks();
   };
 
-  // 🔹 Filter logic
+  // ✔ Complete
+  const markCompleted = async (id) => {
+    await API.put(`/tasks/status/${id}`);
+    getTasks();
+  };
+
+  // ❌ Cross
+  const crossTask = async (id) => {
+    await API.put(`/tasks/cross/${id}`);
+    getTasks();
+  };
+
+  // 🗑 Delete
+  const deleteTask = async (id) => {
+    await API.put(`/tasks/delete/${id}`);
+    getTasks();
+  };
+
+  // 🔹 Filter
   const filteredTasks =
     filter === "all"
       ? tasks
@@ -55,13 +61,10 @@ export default function Dashboard() {
 
   return (
     <div>
-      {/* ✅ Navbar */}
       <Navbar setFilter={setFilter} />
 
       <div style={{ padding: "20px" }}>
-        {/* ❌ Removed Dashboard Title */}
-
-        {/* ➕ Add Task Section */}
+        {/* Add Task */}
         <input
           placeholder="Title"
           value={newTask.title}
@@ -101,53 +104,42 @@ export default function Dashboard() {
 
         <hr />
 
-        {/* 📋 Task List */}
-        {filteredTasks.map((task) => {
-          const isCompleted = completedTasks.includes(task.id);
-          const isDeleted = deletedTasks.includes(task.id);
+        {/* Tasks */}
+        {filteredTasks.map((task) => (
+          <div
+            key={task.id}
+            style={{
+              margin: "10px 0",
+              textDecoration:
+                task.status === "not_completed"
+                  ? "line-through"
+                  : "none"
+            }}
+          >
+            <b>{task.title}</b> ({task.category}) - {task.priority}
+            <br />
+            Due: {task.due_date}
 
-          return (
-            <div
-              key={task.id}
-              style={{
-                margin: "10px 0",
-                textDecoration: isDeleted ? "line-through" : "none",
-                opacity: isDeleted ? 0.5 : 1
-              }}
-            >
-              <b>{task.title}</b> ({task.category}) - {task.priority}
-              <br />
-              Due: {task.due_date}
+            {/* Status Labels */}
+            {task.status === "completed" && (
+              <span style={{ color: "green", marginLeft: "10px" }}>
+                ✅ Completed
+              </span>
+            )}
 
-              {/* ✅ Completed Label */}
-              {isCompleted && (
-                <span style={{ color: "green", marginLeft: "10px" }}>
-                  ✅ Completed
-                </span>
-              )}
+            {task.status === "not_completed" && (
+              <span style={{ color: "red", marginLeft: "10px" }}>
+                ❌ Not Completed
+              </span>
+            )}
 
-              <br />
+            <br />
 
-              {/* ✔ Tick Button */}
-              <button
-                onClick={() =>
-                  setCompletedTasks([...completedTasks, task.id])
-                }
-              >
-                ✔
-              </button>
-
-              {/* ❌ Cross Button */}
-              <button
-                onClick={() =>
-                  setDeletedTasks([...deletedTasks, task.id])
-                }
-              >
-                ❌
-              </button>
-            </div>
-          );
-        })}
+            <button onClick={() => markCompleted(task.id)}>✔</button>
+            <button onClick={() => crossTask(task.id)}>❌</button>
+            <button onClick={() => deleteTask(task.id)}>🗑</button>
+          </div>
+        ))}
       </div>
     </div>
   );
