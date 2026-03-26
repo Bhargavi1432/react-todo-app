@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔹 MySQL connection
+// 🔹 DB connection
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
@@ -15,14 +15,14 @@ const db = mysql.createConnection({
 });
 
 db.connect((err) => {
-  if (err) {
-    console.error("❌ DB Connection Failed:", err);
-  } else {
-    console.log("✅ MySQL Connected");
-  }
+  if (err) console.error(err);
+  else console.log("✅ MySQL Connected");
 });
 
-// 🔐 LOGIN
+
+// ================= AUTH ================= //
+
+// LOGIN
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
@@ -56,25 +56,30 @@ app.post("/register", (req, res) => {
   );
 });
 
+
+// ================= TASKS ================= //
+
 // ➕ ADD TASK
 app.post("/tasks", (req, res) => {
   const { user_id, title, category, priority, due_date } = req.body;
 
   db.query(
-    "INSERT INTO tasks (user_id, title, category, priority, due_date) VALUES (?, ?, ?, ?, ?)",
+    `INSERT INTO tasks 
+    (user_id, title, category, priority, due_date, status, is_deleted)
+    VALUES (?, ?, ?, ?, ?, 'pending', 0)`,
     [user_id, title, category, priority, due_date],
     (err) => {
       if (err) return res.status(500).send(err);
 
-      res.json({ success: true, message: "Task Added" });
+      res.json({ success: true });
     }
   );
 });
 
-// 📥 GET TASKS
+// 📥 GET TASKS (only visible)
 app.get("/tasks/:userId", (req, res) => {
   db.query(
-    "SELECT * FROM tasks WHERE user_id=?",
+    "SELECT * FROM tasks WHERE user_id=? AND is_deleted=0",
     [req.params.userId],
     (err, result) => {
       if (err) return res.status(500).send(err);
@@ -84,41 +89,48 @@ app.get("/tasks/:userId", (req, res) => {
   );
 });
 
-// ✏️ UPDATE TASK (✅ FULLY FIXED)
-app.put("/tasks/:id", (req, res) => {
-  const { title, category, priority, due_date } = req.body;
-
+// ✔ COMPLETE
+app.put("/tasks/status/:id", (req, res) => {
   db.query(
-    "UPDATE tasks SET title=?, category=?, priority=?, due_date=? WHERE id=?",
-    [
-      title || null,
-      category || null,
-      priority || null,
-      due_date || null,
-      req.params.id
-    ],
-    (err, result) => {
-      if (err) {
-        console.error("❌ Update Error:", err);
-        return res.status(500).send(err);
-      }
-
-      res.json({ success: true, message: "Task Updated" });
-    }
-  );
-});
-
-// ❌ DELETE TASK
-app.delete("/tasks/:id", (req, res) => {
-  db.query(
-    "DELETE FROM tasks WHERE id=?",
+    "UPDATE tasks SET status='completed' WHERE id=?",
     [req.params.id],
     (err) => {
       if (err) return res.status(500).send(err);
 
-      res.json({ success: true, message: "Task Deleted" });
+      res.json({ success: true });
     }
   );
 });
 
-app.listen(5000, () => console.log("🚀 Server running on port 5000"));
+// ❌ CROSS (NOT COMPLETED)
+app.put("/tasks/cross/:id", (req, res) => {
+  db.query(
+    "UPDATE tasks SET status='not_completed', is_deleted=0 WHERE id=?",
+    [req.params.id],
+    (err) => {
+      if (err) return res.status(500).send(err);
+
+      res.json({ success: true });
+    }
+  );
+});
+
+// 🗑 DELETE (HIDE)
+app.put("/tasks/delete/:id", (req, res) => {
+  db.query(
+    "UPDATE tasks SET is_deleted=1 WHERE id=?",
+    [req.params.id],
+    (err) => {
+      if (err) return res.status(500).send(err);
+
+      res.json({ success: true });
+    }
+  );
+});
+
+
+// ================= SERVER ================= //
+
+app.listen(5000, () => {
+  console.log("🚀 Server running on port 5000");
+});
