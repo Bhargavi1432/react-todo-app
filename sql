@@ -46,3 +46,8 @@ VALUES
 (1, 'Study React', 'study', 'high', '2026-04-01'),
 (1, 'Gym Workout', 'personal', 'medium', '2026-04-02'),
 (1, 'Project Meeting', 'work', 'high', '2026-04-03');
+
+
+UPDATE tasks 
+SET status = 'pending', is_deleted = 0
+WHERE status IS NULL;
