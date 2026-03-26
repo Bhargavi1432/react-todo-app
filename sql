@@ -20,19 +20,14 @@ CREATE TABLE users (
 -- ================= TASKS TABLE =================
 
 CREATE TABLE tasks (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
-
+  user_id INT NOT NULL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   category VARCHAR(50) NOT NULL,   -- personal / work / study
   priority VARCHAR(50) NOT NULL,   -- low / medium / high
   due_date DATE NOT NULL,
-
   status VARCHAR(20) DEFAULT 'pending',   -- pending / completed / not_completed
   is_deleted TINYINT(1) DEFAULT 0,        -- 0 = visible, 1 = deleted
-
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
