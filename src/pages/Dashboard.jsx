@@ -6,6 +6,10 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("all");
 
+  // ✅ New states for tick & cross
+  const [completedTasks, setCompletedTasks] = useState([]);
+  const [deletedTasks, setDeletedTasks] = useState([]);
+
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [newTask, setNewTask] = useState({
@@ -37,7 +41,7 @@ export default function Dashboard() {
         user_id: user.id
       });
 
-      getTasks(); // refresh
+      getTasks(); // refresh tasks
     } catch (err) {
       console.error(err);
     }
@@ -51,15 +55,16 @@ export default function Dashboard() {
 
   return (
     <div>
-      {/* Navbar */}
+      {/* ✅ Navbar */}
       <Navbar setFilter={setFilter} />
 
       <div style={{ padding: "20px" }}>
-        <h2>Dashboard</h2>
+        {/* ❌ Removed Dashboard Title */}
 
-        {/* Add Task */}
+        {/* ➕ Add Task Section */}
         <input
           placeholder="Title"
+          value={newTask.title}
           onChange={(e) =>
             setNewTask({ ...newTask, title: e.target.value })
           }
@@ -96,14 +101,53 @@ export default function Dashboard() {
 
         <hr />
 
-        {/* Task List */}
-        {filteredTasks.map((task) => (
-          <div key={task.id} style={{ margin: "10px 0" }}>
-            <b>{task.title}</b> ({task.category}) - {task.priority}
-            <br />
-            Due: {task.due_date}
-          </div>
-        ))}
+        {/* 📋 Task List */}
+        {filteredTasks.map((task) => {
+          const isCompleted = completedTasks.includes(task.id);
+          const isDeleted = deletedTasks.includes(task.id);
+
+          return (
+            <div
+              key={task.id}
+              style={{
+                margin: "10px 0",
+                textDecoration: isDeleted ? "line-through" : "none",
+                opacity: isDeleted ? 0.5 : 1
+              }}
+            >
+              <b>{task.title}</b> ({task.category}) - {task.priority}
+              <br />
+              Due: {task.due_date}
+
+              {/* ✅ Completed Label */}
+              {isCompleted && (
+                <span style={{ color: "green", marginLeft: "10px" }}>
+                  ✅ Completed
+                </span>
+              )}
+
+              <br />
+
+              {/* ✔ Tick Button */}
+              <button
+                onClick={() =>
+                  setCompletedTasks([...completedTasks, task.id])
+                }
+              >
+                ✔
+              </button>
+
+              {/* ❌ Cross Button */}
+              <button
+                onClick={() =>
+                  setDeletedTasks([...deletedTasks, task.id])
+                }
+              >
+                ❌
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
