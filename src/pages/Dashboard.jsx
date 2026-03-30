@@ -116,9 +116,9 @@ export default function Dashboard() {
             Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"} <br />
 
             <div className="task-actions">
-              <button className="complete" onClick={() => updateTask(task.id, { status: "completed" })}>✔ Complete</button>
-              <button className="not-complete" onClick={() => updateTask(task.id, { status: "not_completed" })}>❌ Not Complete</button>
-              <button className="delete" onClick={() => updateTask(task.id, { is_deleted: 1 })}>🗑 Delete</button>
+              <button className="complete" onClick={() => updateTask(task.id, { status: "completed" })}>Complete</button>
+              <button className="not-complete" onClick={() => updateTask(task.id, { status: "not_completed" })}>Not Complete</button>
+              <button className="delete" onClick={() => updateTask(task.id, { is_deleted: 1 })}>Delete</button>
             </div>
           </div>
         ))}
