@@ -46,12 +46,20 @@ VALUES
 (1, 'Project Meeting', 'work', 'high', '2026-04-03');
 
 
-UPDATE tasks 
-SET status = 'pending', is_deleted = 0
-WHERE status IS NULL;
+CREATE TABLE tasks (
+  id INT AUTO_INCREMENT PRIMARY KEY,   -- unique task id
+  user_id INT NOT NULL,                -- same user can have many tasks
 
+  title VARCHAR(255) NOT NULL,
+  category ENUM('personal', 'work', 'study') NOT NULL,
+  priority ENUM('low', 'medium', 'high') NOT NULL,
 
+  status ENUM('pending', 'completed', 'not_completed') DEFAULT 'pending',
+  is_deleted TINYINT(1) DEFAULT 0,
 
-ALTER TABLE tasks 
-ADD COLUMN status VARCHAR(20) DEFAULT 'pending',
-ADD COLUMN is_deleted TINYINT(1) DEFAULT 0;
+  created_at BIGINT NOT NULL,
+  updated_at BIGINT DEFAULT NULL,
+  due_date BIGINT DEFAULT NULL,
+
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
