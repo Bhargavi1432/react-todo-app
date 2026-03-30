@@ -126,16 +126,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-            {/* Buttons */}
-            <div style={{ marginTop: "5px" }}>
-              <button onClick={() => updateTask(task.id, { status: "completed" })}>✔</button>
-              <button onClick={() => updateTask(task.id, { status: "not_completed" })}>❌</button>
-              <button onClick={() => updateTask(task.id, { is_deleted: 1 })}>🗑</button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
