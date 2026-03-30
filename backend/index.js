@@ -10,18 +10,18 @@ app.use(express.json());
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "Bhagi@159/",
+  password: "Bhagi@159/", // replace with your password
   database: "todo_app"
 });
 
 db.connect((err) => {
-  if (err) console.error(err);
+  if (err) console.error("❌ DB Connection Error:", err);
   else console.log("✅ MySQL Connected");
 });
 
 // ================= AUTH ================= //
 
-// LOGIN (only userid + password)
+// LOGIN
 app.post("/login", (req, res) => {
   const { userid, password } = req.body;
 
@@ -40,7 +40,7 @@ app.post("/login", (req, res) => {
   );
 });
 
-// REGISTER (6 fields)
+// REGISTER
 app.post("/register", (req, res) => {
   const { username, firstname, lastname, email, userid, password } = req.body;
 
@@ -57,73 +57,92 @@ app.post("/register", (req, res) => {
 
 // ================= TASKS ================= //
 
-// ➕ ADD TASK
+// ➕ ADD TASK (due_date stored as epoch BIGINT)
 app.post("/tasks", (req, res) => {
   const { user_id, title, category, priority, due_date } = req.body;
 
+  if (!user_id || !title || !due_date) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
   db.query(
     `INSERT INTO tasks 
-    (user_id, title, category, priority, due_date, status, is_deleted)
-    VALUES (?, ?, ?, ?, ?, 'pending', 0)`,
-    [user_id, title, category, priority, due_date],
+    (user_id, title, category, priority, due_date, status, is_deleted, created_at)
+    VALUES (?, ?, ?, ?, ?, 'pending', 0, ?)`,
+    [user_id, title, category, priority, due_date, Date.now()],
     (err) => {
-      if (err) return res.status(500).send(err);
-
+      if (err) {
+        console.error("SQL Error:", err);
+        return res.status(500).json({ error: err.sqlMessage });
+      }
       res.json({ success: true });
     }
   );
 });
 
-// 📥 GET TASKS (only visible)
+// 📥 GET TASKS
 app.get("/tasks/:userId", (req, res) => {
   db.query(
     "SELECT * FROM tasks WHERE user_id=? AND is_deleted=0",
     [req.params.userId],
     (err, result) => {
       if (err) return res.status(500).send(err);
-
       res.json(result);
     }
   );
 });
 
-// ✔ COMPLETE
-app.put("/tasks/status/:id", (req, res) => {
-  db.query(
-    "UPDATE tasks SET status='completed' WHERE id=?",
-    [req.params.id],
-    (err) => {
-      if (err) return res.status(500).send(err);
+// 🔄 UPDATE TASK (flexible route)
+app.put("/tasks/:id", (req, res) => {
+  const { id } = req.params;
+  const { status, title, category, priority, due_date, is_deleted } = req.body;
 
-      res.json({ success: true });
+  let fields = [];
+  let values = [];
+
+  if (status !== undefined) {
+    // ✅ Only allow valid ENUM values
+    if (!["pending", "completed", "not_completed"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status value" });
     }
-  );
-});
+    fields.push("status=?");
+    values.push(status);
+  }
+  if (title !== undefined) {
+    fields.push("title=?");
+    values.push(title);
+  }
+  if (category !== undefined) {
+    fields.push("category=?");
+    values.push(category);
+  }
+  if (priority !== undefined) {
+    fields.push("priority=?");
+    values.push(priority);
+  }
+  if (due_date !== undefined) {
+    fields.push("due_date=?");
+    values.push(due_date);
+  }
+  if (is_deleted !== undefined) {
+    fields.push("is_deleted=?");
+    values.push(is_deleted);
+  }
 
-// ❌ CROSS (NOT COMPLETED)
-app.put("/tasks/cross/:id", (req, res) => {
-  db.query(
-    "UPDATE tasks SET status='not_completed', is_deleted=0 WHERE id=?",
-    [req.params.id],
-    (err) => {
-      if (err) return res.status(500).send(err);
+  if (fields.length === 0) {
+    return res.status(400).json({ error: "No fields to update" });
+  }
 
-      res.json({ success: true });
+  const sql = `UPDATE tasks SET ${fields.join(", ")} WHERE id=?`;
+  values.push(id);
+
+  db.query(sql, values, (err) => {
+    if (err) {
+      console.error("SQL Error:", err);
+      return res.status(500).json({ error: err.sqlMessage });
     }
-  );
-});
-
-// 🗑 DELETE (HIDE)
-app.put("/tasks/delete/:id", (req, res) => {
-  db.query(
-    "UPDATE tasks SET is_deleted=1 WHERE id=?",
-    [req.params.id],
-    (err) => {
-      if (err) return res.status(500).send(err);
-
-      res.json({ success: true });
-    }
-  );
+    res.json({ success: true });
+  });
 });
 
 // ================= SERVER ================= //
