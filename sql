@@ -45,21 +45,22 @@ VALUES
 (1, 'Gym Workout', 'personal', 'medium', '2026-04-02'),
 (1, 'Project Meeting', 'work', 'high', '2026-04-03');
 
+updated task table
 
 CREATE TABLE tasks (
-  id INT AUTO_INCREMENT PRIMARY KEY,   -- unique task id
-  user_id INT NOT NULL,                -- same user can have many tasks
-
-  title VARCHAR(255) NOT NULL,
-  category ENUM('personal', 'work', 'study') NOT NULL,
-  priority ENUM('low', 'medium', 'high') NOT NULL,
-
-  status ENUM('pending', 'completed', 'not_completed') DEFAULT 'pending',
-  is_deleted TINYINT(1) DEFAULT 0,
-
-  created_at BIGINT NOT NULL,
-  updated_at BIGINT DEFAULT NULL,
-  due_date BIGINT DEFAULT NULL,
-
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
+    ->   id INT AUTO_INCREMENT PRIMARY KEY,       -- unique task id
+    ->   user_id INT NOT NULL,                    -- foreign key to users.id
+    ->
+    ->   title VARCHAR(255) NOT NULL,             -- task title
+    ->   category ENUM('personal', 'work', 'study') NOT NULL,
+    ->   priority ENUM('low', 'medium', 'high') NOT NULL,
+    ->
+    ->   status ENUM('pending', 'completed', 'not_completed') DEFAULT 'pending',
+    ->   is_deleted TINYINT(1) DEFAULT 0,
+    ->
+    ->   created_at BIGINT NOT NULL,              -- epoch timestamp
+    ->   updated_at BIGINT DEFAULT NULL,          -- epoch timestamp
+    ->   due_date BIGINT DEFAULT NULL,            -- epoch timestamp
+    ->
+    ->   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    -> );
