@@ -1,0 +1,81 @@
+.dashboard-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #fafafa;
+  min-height: 100vh;
+}
+
+.task-input {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.task-input input,
+.task-input select,
+.task-input button {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.task-input button {
+  background-color: #1976d2;
+  color: white;
+  cursor: pointer;
+}
+
+.task-input button:hover {
+  background-color: #1565c0;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-card {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.task-card.completed {
+  border-left: 5px solid #4caf50;
+}
+
+.task-card.not-completed {
+  border-left: 5px solid #f44336;
+  text-decoration: line-through;
+}
+
+.task-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.task-actions button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.task-actions button.complete {
+  background-color: #4caf50;
+  color: white;
+}
+
+.task-actions button.not-complete {
+  background-color: #f44336;
+  color: white;
+}
+
+.task-actions button.delete {
+  background-color: #9e9e9e;
+  color: white;
+}
