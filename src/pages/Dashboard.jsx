@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import Navbar from "../components/Navbar";
+import "./dashboard.css";
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
@@ -12,10 +13,9 @@ export default function Dashboard() {
     title: "",
     category: "personal",
     priority: "low",
-    due_date: "" // user enters YYYY-MM-DD
+    due_date: ""
   });
 
-  // Fetch tasks
   const getTasks = async () => {
     if (!user) return;
     try {
@@ -31,16 +31,12 @@ export default function Dashboard() {
     getTasks();
   }, []);
 
-  // Add task
   const addTask = async () => {
     if (!newTask.title || !newTask.due_date) {
       alert("Please fill Title and Due Date");
       return;
     }
-
-    // Convert YYYY-MM-DD string → epoch (ms)
     const dueDateEpoch = new Date(newTask.due_date).getTime();
-
     try {
       await API.post("/tasks", { 
         ...newTask, 
@@ -55,87 +51,81 @@ export default function Dashboard() {
     }
   };
 
-  // Update task
   const updateTask = async (id, updates) => {
     try {
       await API.put(`/tasks/${id}`, updates);
-      getTasks(); // refresh list after update
+      getTasks();
     } catch (err) {
       console.error("Error updating task:", err);
       alert("Failed to update task.");
     }
   };
 
-  // Filter tasks
   const filteredTasks =
     filter === "all" ? tasks : tasks.filter((t) => t.category === filter);
 
   return (
-    <div>
+    <div className="dashboard-container">
       <Navbar setFilter={setFilter} />
 
-      <div style={{ padding: "20px" }}>
-        {/* Add Task */}
-        <div style={{ marginBottom: "20px" }}>
-          <input
-            placeholder="Task Title"
-            value={newTask.title}
-            onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-          />
+      {/* Add Task */}
+      <div className="task-input">
+        <input
+          placeholder="Task Title"
+          value={newTask.title}
+          onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+        />
 
-          <select
-            value={newTask.category}
-            onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
-          >
-            <option value="personal">Personal</option>
-            <option value="work">Work</option>
-            <option value="study">Study</option>
-          </select>
+        <select
+          value={newTask.category}
+          onChange={(e) => setNewTask({ ...newTask, category: e.target.value })}
+        >
+          <option value="personal">Personal</option>
+          <option value="work">Work</option>
+          <option value="study">Study</option>
+        </select>
 
-          <select
-            value={newTask.priority}
-            onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
+        <select
+          value={newTask.priority}
+          onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
 
-          <input
-            type="date"
-            value={newTask.due_date}
-            onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
-          />
+        <input
+          type="date"
+          value={newTask.due_date}
+          onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
+        />
 
-          <button onClick={addTask} style={{ marginLeft: "10px" }}>
-            Add Task
-          </button>
-        </div>
+        <button onClick={addTask}>Add Task</button>
+      </div>
 
-        <hr />
+      <hr />
 
-        {/* Display Tasks */}
+      {/* Display Tasks */}
+      <div className="task-list">
         {filteredTasks.map((task) => (
           <div
             key={task.id}
-            style={{
-              margin: "10px 0",
-              padding: "10px",
-              border: "1px solid #ccc",
-              borderRadius: "5px",
-              textDecoration: task.status === "not_completed" ? "line-through" : "none"
-            }}
+            className={`task-card ${task.status === "completed" ? "completed" : task.status === "not_completed" ? "not-completed" : ""}`}
           >
             <b>{task.title}</b> ({task.category}) - {task.priority} <br />
             Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"} <br />
 
-            {/* Status Labels */}
-            {task.status === "completed" && (
-              <span style={{ color: "green", marginLeft: "10px" }}>✅ Completed</span>
-            )}
-            {task.status === "not_completed" && (
-              <span style={{ color: "red", marginLeft: "10px" }}>❌ Not Completed</span>
-            )}
+            <div className="task-actions">
+              <button className="complete" onClick={() => updateTask(task.id, { status: "completed" })}>✔ Complete</button>
+              <button className="not-complete" onClick={() => updateTask(task.id, { status: "not_completed" })}>❌ Not Complete</button>
+              <button className="delete" onClick={() => updateTask(task.id, { is_deleted: 1 })}>🗑 Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
             {/* Buttons */}
             <div style={{ marginTop: "5px" }}>
