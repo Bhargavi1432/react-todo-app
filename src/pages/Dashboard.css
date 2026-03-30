@@ -85,3 +85,14 @@
   color: white;
 }
 
+.welcome-name {
+  margin: 20px 0 10px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+}
+
+.welcome-name span {
+  color: #007bff;
+}
+
