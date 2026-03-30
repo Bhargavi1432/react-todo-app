@@ -72,6 +72,12 @@ export default function Dashboard() {
     <div className="dashboard-container">
       <Navbar setFilter={setFilter} />
 
+      {user && (
+      <h2 className="welcome-name">
+        👋 Welcome, <span>{user.username}</span>
+      </h2>
+    )}
+
       {/* Add Task */}
       <div className="task-input">
         <input
