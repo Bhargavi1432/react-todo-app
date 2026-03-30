@@ -79,3 +79,9 @@
   background-color: #9e9e9e;
   color: white;
 }
+
+.task-actions button.edit {
+  background-color: #1976d2;
+  color: white;
+}
+
