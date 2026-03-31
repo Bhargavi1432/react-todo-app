@@ -6,6 +6,8 @@ import "./dashboard.css";
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("none");   // 🔹 new state for sorting
+  const [searchTerm, setSearchTerm] = useState(""); // 🔹 new state for searching
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -16,7 +18,6 @@ export default function Dashboard() {
     due_date: ""
   });
 
-  // 🔹 New state for editing
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editTask, setEditTask] = useState({ title: "", category: "", priority: "", due_date: "" });
 
@@ -65,8 +66,23 @@ export default function Dashboard() {
     }
   };
 
-  const filteredTasks =
-    filter === "all" ? tasks : tasks.filter((t) => t.category === filter);
+  // 🔹 Filtering
+  let filteredTasks = filter === "all" ? tasks : tasks.filter((t) => t.category === filter);
+
+  // 🔹 Searching
+  filteredTasks = filteredTasks.filter((t) =>
+    t.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // 🔹 Sorting
+  if (sortBy === "due_date") {
+    filteredTasks = [...filteredTasks].sort((a, b) => a.due_date - b.due_date);
+  } else if (sortBy === "priority") {
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    filteredTasks = [...filteredTasks].sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+  } else if (sortBy === "status") {
+    filteredTasks = [...filteredTasks].sort((a, b) => (a.status > b.status ? 1 : -1));
+  }
 
   return (
     <div className="dashboard-container">
@@ -115,6 +131,23 @@ export default function Dashboard() {
 
       <hr />
 
+      {/* 🔹 Search and Sort Controls */}
+      <div className="task-controls">
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="none">Sort by</option>
+          <option value="due_date">Due Date</option>
+          <option value="priority">Priority</option>
+          <option value="status">Status</option>
+        </select>
+      </div>
+
       {/* Display Tasks */}
       <div className="task-list">
         {filteredTasks.map((task) => (
@@ -161,8 +194,8 @@ export default function Dashboard() {
                 <div className="task-info">
                   <b>{task.title}</b> ({task.category}) - {task.priority}
                 </div>
-                <div className="task-due-date">Due:
-                  {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"}
+                <div className="task-due-date">
+                  Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"}
                 </div>
               </div>
             )}
