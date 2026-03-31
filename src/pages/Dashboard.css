@@ -30,6 +30,36 @@
   background-color: #1565c0;
 }
 
+/* 🔹 Filters Section */
+.filters {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.filters button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  background: #e0e0e0;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.filters button:hover {
+  background: #d5d5d5;
+  transform: translateY(-1px);
+}
+
+.filters button.active {
+  background: #1976d2;
+  color: #fff;
+  font-weight: bold;
+}
+
 /* 🔹 Search + Sort Controls */
 .task-controls {
   display: flex;
@@ -101,6 +131,12 @@
   font-size: 14px;
   font-weight: bold;
   color: #555;
+}
+
+/* 🔹 Overdue Highlighting */
+.task-due-date.overdue {
+  color: #d32f2f;
+  font-weight: bold;
 }
 
 /* 🔹 Task Actions */
