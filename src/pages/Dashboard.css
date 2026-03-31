@@ -96,3 +96,13 @@
   color: #007bff;
 }
 
+.task-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-due-date {
+  font-weight: bold;
+  color: #555;
+}
