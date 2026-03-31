@@ -71,12 +71,12 @@ export default function Dashboard() {
   return (
     <div className="dashboard-container">
       <Navbar setFilter={setFilter} />
-
+  
       {user && (
-      <h2 className="welcome-name">
-        👋 Welcome, <span>{user.username}</span>
-      </h2>
-    )}
+        <h2 className="welcome-name">
+          👋 Welcome, <span>{user.username}</span>
+        </h2>
+      )}
 
       {/* Add Task */}
       <div className="task-input">
@@ -153,30 +153,34 @@ export default function Dashboard() {
                   const dueDateEpoch = editTask.due_date ? new Date(editTask.due_date).getTime() : null;
                   updateTask(task.id, { ...editTask, due_date: dueDateEpoch });
                   setEditingTaskId(null);
-                }}>💾 Save</button>
+                }}>Save</button>
                 <button onClick={() => setEditingTaskId(null)}>✖ Cancel</button>
               </>
             ) : (
-              <>
-                <b>{task.title}</b> ({task.category}) - {task.priority} <br />
-                Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"} <br />
-
-                <div className="task-actions">
-                  <button className="complete" onClick={() => updateTask(task.id, { status: "completed" })}>complete</button>
-                  <button className="not-complete" onClick={() => updateTask(task.id, { status: "not_completed" })}>not complete</button>
-                  <button className="delete" onClick={() => updateTask(task.id, { is_deleted: 1 })}>delete</button>
-                  <button className= "edit"onClick={() => {
-                    setEditingTaskId(task.id);
-                    setEditTask({
-                      title: task.title,
-                      category: task.category,
-                      priority: task.priority,
-                      due_date: task.due_date
-                    });
-                  }}>edit</button>
+              <div className="task-content">
+                <div className="task-info">
+                  <b>{task.title}</b> ({task.category}) - {task.priority}
                 </div>
-              </>
+                <div className="task-due-date">Due:
+                  {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"}
+                </div>
+              </div>
             )}
+
+            <div className="task-actions">
+              <button className="complete" onClick={() => updateTask(task.id, { status: "completed" })}>complete</button>
+              <button className="not-complete" onClick={() => updateTask(task.id, { status: "not_completed" })}>not complete</button>
+              <button className="delete" onClick={() => updateTask(task.id, { is_deleted: 1 })}>delete</button>
+              <button className="edit" onClick={() => {
+                setEditingTaskId(task.id);
+                setEditTask({
+                  title: task.title,
+                  category: task.category,
+                  priority: task.priority,
+                  due_date: task.due_date
+                });
+              }}>edit</button>
+            </div>
           </div>
         ))}
       </div>
