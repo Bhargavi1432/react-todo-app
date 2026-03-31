@@ -1,23 +1,23 @@
-import { useNavigate } from "react-router-dom";
-import "./Navbar.css"; // ✅ Import CSS
+import { useNavigate, Link } from "react-router-dom";
+import "./Navbar.css";
 
-export default function Navbar({ setFilter }) {
+export default function Navbar() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("user"); // clear session
-    navigate("/"); // redirect to login
+    localStorage.removeItem("user");
+    navigate("/"); 
   };
 
   return (
     <div className="navbar">
-      <div className="filters">
-        <button onClick={() => setFilter("all")}>All</button>
-        <button onClick={() => setFilter("personal")}>Personal</button>
-        <button onClick={() => setFilter("work")}>Work</button>
-        <button onClick={() => setFilter("study")}>Study</button>
+      {/* 🔹 Navigation Links */}
+      <div className="nav-links">
+        <Link to="/dashboard">Dashboard</Link>
+        <Link to="/data">Data</Link>
       </div>
 
+      {/* 🔹 Logout */}
       <button className="logout" onClick={handleLogout}>
         Logout
       </button>
