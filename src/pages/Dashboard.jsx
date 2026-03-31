@@ -6,8 +6,8 @@ import "./dashboard.css";
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("none");   // 🔹 new state for sorting
-  const [searchTerm, setSearchTerm] = useState(""); // 🔹 new state for searching
+  const [sortBy, setSortBy] = useState("none");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -19,8 +19,14 @@ export default function Dashboard() {
   });
 
   const [editingTaskId, setEditingTaskId] = useState(null);
-  const [editTask, setEditTask] = useState({ title: "", category: "", priority: "", due_date: "" });
+  const [editTask, setEditTask] = useState({
+    title: "",
+    category: "",
+    priority: "",
+    due_date: ""
+  });
 
+  // 🔹 Fetch tasks
   const getTasks = async () => {
     if (!user) return;
     try {
@@ -36,6 +42,7 @@ export default function Dashboard() {
     getTasks();
   }, []);
 
+  // 🔹 Add new task
   const addTask = async () => {
     if (!newTask.title || !newTask.due_date) {
       alert("Please fill Title and Due Date");
@@ -43,10 +50,10 @@ export default function Dashboard() {
     }
     const dueDateEpoch = new Date(newTask.due_date).getTime();
     try {
-      await API.post("/tasks", { 
-        ...newTask, 
-        due_date: dueDateEpoch, 
-        user_id: user.id 
+      await API.post("/tasks", {
+        ...newTask,
+        due_date: dueDateEpoch,
+        user_id: user.id
       });
       setNewTask({ title: "", category: "personal", priority: "low", due_date: "" });
       getTasks();
@@ -56,6 +63,7 @@ export default function Dashboard() {
     }
   };
 
+  // 🔹 Update task
   const updateTask = async (id, updates) => {
     try {
       await API.put(`/tasks/${id}`, updates);
@@ -86,15 +94,23 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-container">
-      <Navbar setFilter={setFilter} />
-  
+      <Navbar />
+
       {user && (
         <h2 className="welcome-name">
           👋 Welcome, <span>{user.username}</span>
         </h2>
       )}
 
-      {/* Add Task */}
+      {/* 🔹 Filters inside Dashboard */}
+      <div className="filters">
+        <button onClick={() => setFilter("all")}>All</button>
+        <button onClick={() => setFilter("personal")}>Personal</button>
+        <button onClick={() => setFilter("work")}>Work</button>
+        <button onClick={() => setFilter("study")}>Study</button>
+      </div>
+
+      {/* 🔹 Add Task */}
       <div className="task-input">
         <input
           placeholder="Task Title"
@@ -131,7 +147,7 @@ export default function Dashboard() {
 
       <hr />
 
-      {/* 🔹 Search and Sort Controls */}
+      {/* 🔹 Search + Sort Controls */}
       <div className="task-controls">
         <input
           type="text"
@@ -148,74 +164,77 @@ export default function Dashboard() {
         </select>
       </div>
 
-      {/* Display Tasks */}
+      {/* 🔹 Task List */}
       <div className="task-list">
-        {filteredTasks.map((task) => (
-          <div
-            key={task.id}
-            className={`task-card ${task.status === "completed" ? "completed" : task.status === "not_completed" ? "not-completed" : ""}`}
-          >
-            {editingTaskId === task.id ? (
-              <>
-                <input
-                  value={editTask.title}
-                  onChange={(e) => setEditTask({ ...editTask, title: e.target.value })}
-                />
-                <select
-                  value={editTask.category}
-                  onChange={(e) => setEditTask({ ...editTask, category: e.target.value })}
-                >
-                  <option value="personal">Personal</option>
-                  <option value="work">Work</option>
-                  <option value="study">Study</option>
-                </select>
-                <select
-                  value={editTask.priority}
-                  onChange={(e) => setEditTask({ ...editTask, priority: e.target.value })}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-                <input
-                  type="date"
-                  value={editTask.due_date ? new Date(editTask.due_date).toISOString().split("T")[0] : ""}
-                  onChange={(e) => setEditTask({ ...editTask, due_date: e.target.value })}
-                />
-                <button onClick={() => {
-                  const dueDateEpoch = editTask.due_date ? new Date(editTask.due_date).getTime() : null;
-                  updateTask(task.id, { ...editTask, due_date: dueDateEpoch });
-                  setEditingTaskId(null);
-                }}>Save</button>
-                <button onClick={() => setEditingTaskId(null)}>✖ Cancel</button>
-              </>
-            ) : (
-              <div className="task-content">
-                <div className="task-info">
-                  <b>{task.title}</b> ({task.category}) - {task.priority}
+        {filteredTasks.map((task) => {
+          const isOverdue = task.due_date && new Date(task.due_date) < new Date();
+          return (
+            <div
+              key={task.id}
+              className={`task-card ${task.status === "completed" ? "completed" : task.status === "not_completed" ? "not-completed" : ""}`}
+            >
+              {editingTaskId === task.id ? (
+                <>
+                  <input
+                    value={editTask.title}
+                    onChange={(e) => setEditTask({ ...editTask, title: e.target.value })}
+                  />
+                  <select
+                    value={editTask.category}
+                    onChange={(e) => setEditTask({ ...editTask, category: e.target.value })}
+                  >
+                    <option value="personal">Personal</option>
+                    <option value="work">Work</option>
+                    <option value="study">Study</option>
+                  </select>
+                  <select
+                    value={editTask.priority}
+                    onChange={(e) => setEditTask({ ...editTask, priority: e.target.value })}
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                  <input
+                    type="date"
+                    value={editTask.due_date ? new Date(editTask.due_date).toISOString().split("T")[0] : ""}
+                    onChange={(e) => setEditTask({ ...editTask, due_date: e.target.value })}
+                  />
+                  <button onClick={() => {
+                    const dueDateEpoch = editTask.due_date ? new Date(editTask.due_date).getTime() : null;
+                    updateTask(task.id, { ...editTask, due_date: dueDateEpoch });
+                    setEditingTaskId(null);
+                  }}>Save</button>
+                  <button onClick={() => setEditingTaskId(null)}>✖ Cancel</button>
+                </>
+              ) : (
+                <div className="task-content">
+                  <div className="task-info">
+                    <b>{task.title}</b> ({task.category}) - {task.priority}
+                  </div>
+                  <div className={`task-due-date ${isOverdue ? "overdue" : ""}`}>
+                    Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"}
+                  </div>
                 </div>
-                <div className="task-due-date">
-                  Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"}
-                </div>
-              </div>
-            )}
+              )}
 
-            <div className="task-actions">
-              <button className="complete" onClick={() => updateTask(task.id, { status: "completed" })}>complete</button>
-              <button className="not-complete" onClick={() => updateTask(task.id, { status: "not_completed" })}>not complete</button>
-              <button className="delete" onClick={() => updateTask(task.id, { is_deleted: 1 })}>delete</button>
-              <button className="edit" onClick={() => {
-                setEditingTaskId(task.id);
-                setEditTask({
-                  title: task.title,
-                  category: task.category,
-                  priority: task.priority,
-                  due_date: task.due_date
-                });
-              }}>edit</button>
+              <div className="task-actions">
+                <button className="complete" onClick={() => updateTask(task.id, { status: "completed" })}>complete</button>
+                <button className="not-complete" onClick={() => updateTask(task.id, { status: "not_completed" })}>not complete</button>
+                <button className="delete" onClick={() => updateTask(task.id, { is_deleted: 1 })}>delete</button>
+                <button className="edit" onClick={() => {
+                  setEditingTaskId(task.id);
+                  setEditTask({
+                    title: task.title,
+                    category: task.category,
+                    priority: task.priority,
+                    due_date: task.due_date
+                  });
+                }}>edit</button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
