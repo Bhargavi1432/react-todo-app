@@ -1,0 +1,87 @@
+.data-container {
+  width: 100%;
+  margin: 10px auto;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: Arial, sans-serif;
+  background: #fff;
+  overflow-x: auto; /* enables horizontal scroll */
+}
+
+.data-row {
+  display: grid;
+  grid-template-columns: repeat(12, 220px); /* match 13 headings */
+  width: max-content; /* ensures grid expands beyond container */
+  border-bottom: 1px solid #eee;
+}
+
+.data-row.headings {
+  background-color: #0078d7;
+  font-weight: bold;
+  text-align: center;
+  color: white;
+  position: sticky; /* keeps it fixed */
+  top: 0;           /* sticks to the top */
+  z-index: 2;       /* ensures it stays above other rows */
+}
+
+.data-cell {
+  padding: 10px;
+  border-right: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 220px; /* consistent with grid column width */
+}
+
+.data-cell:last-child {
+  border-right: none;
+}
+
+.data-cell input,
+.data-cell select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.data-cell input[type="file"] {
+  border: none;
+  padding: 0;
+}
+
+.data-cell button {
+  margin: 0 5px;
+  padding: 6px 12px;
+  background-color: #0078d7;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.data-cell button:hover {
+  background-color: #005a9e;
+}
+
+.add-row {
+  margin: 15px;
+  padding: 10px 20px;
+  background-color: #0078d7;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.add-row:hover {
+  background-color: #005a9e;
+}
+
