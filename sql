@@ -64,3 +64,17 @@ CREATE TABLE tasks (
     ->
     ->   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     -> );
+
+CREATE TABLE subscriptions (
+    ->     id INT AUTO_INCREMENT PRIMARY KEY,
+    ->     subscriptionId VARCHAR(255),
+    ->     msisdn VARCHAR(20),
+    ->     iccid VARCHAR(30),
+    ->     imsi VARCHAR(30),
+    ->     activationDate BIGINT,  -- epoch timestamp
+    ->     creationDate BIGINT,    -- epoch timestamp
+    ->     planName VARCHAR(255),
+    ->     productType VARCHAR(255),
+    ->     businessUnit VARCHAR(255),
+    ->     status VARCHAR(50),
+    ->     file VARCHAR(255)       -- store file path or name
