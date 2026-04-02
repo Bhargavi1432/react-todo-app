@@ -10,7 +10,7 @@ app.use(express.json());
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "Bhagi@159/", // replace with your password
+  password: "Password", // replace with your password
   database: "todo_app"
 });
 
