@@ -1,87 +1,128 @@
 .data-container {
   width: 100%;
-  margin: 10px auto;
+  margin: 12px auto;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 8px;
+  background: #f9f9f9;
   font-family: Arial, sans-serif;
-  background: #fff;
-  overflow-x: auto; /* enables horizontal scroll */
 }
 
+/* Title */
+.page-title {
+  padding: 16px;
+  margin: 0;
+  background: white;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Action bar */
+.table-actions {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 1px solid #ddd;
+}
+
+.upload-btn {
+  background: #0078d7;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Scroll wrapper */
+.table-scroll {
+  overflow-x: auto;
+  padding-bottom: 10px;
+  position: relative;
+}
+
+/* Heading row */
+.data-row.headings {
+  display: grid;
+  grid-template-columns: repeat(11, 220px) 80px;
+  width: max-content;
+  background: #0078d7;
+  color: white;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* Data rows as cards */
 .data-row {
   display: grid;
-  grid-template-columns: repeat(12, 220px); /* match 13 headings */
-  width: max-content; /* ensures grid expands beyond container */
-  border-bottom: 1px solid #eee;
+  grid-template-columns: repeat(11, 220px) 80px;
+  width: max-content;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }
 
-.data-row.headings {
-  background-color: #0078d7;
-  font-weight: bold;
-  text-align: center;
-  color: white;
-  position: sticky; /* keeps it fixed */
-  top: 0;           /* sticks to the top */
-  z-index: 2;       /* ensures it stays above other rows */
-}
-
+/* Cells */
 .data-cell {
   padding: 10px;
   border-right: 1px solid #eee;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 220px; /* consistent with grid column width */
 }
 
 .data-cell:last-child {
   border-right: none;
 }
 
+/* Inputs */
 .data-cell input,
 .data-cell select {
   width: 100%;
-  padding: 6px 8px;
+  padding: 6px;
+  border-radius: 4px;
   border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-  box-sizing: border-box;
 }
 
-.data-cell input[type="file"] {
-  border: none;
-  padding: 0;
+.data-cell input:disabled,
+.data-cell select:disabled {
+  background: #f3f3f3;
 }
 
-.data-cell button {
-  margin: 0 5px;
-  padding: 6px 12px;
-  background-color: #0078d7;
-  color: #fff;
+/* Actions */
+.action-cell {
+  position: relative;
+}
+
+.menu-btn {
+  background: none;
   border: none;
-  border-radius: 4px;
-  font-size: 14px;
+  font-size: 18px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
 }
 
-.data-cell button:hover {
-  background-color: #005a9e;
+.dropdown {
+  position: absolute;
+  right: 8px;
+  top: 34px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  z-index: 100;
+  min-width: 130px;
 }
 
-.add-row {
-  margin: 15px;
-  padding: 10px 20px;
-  background-color: #0078d7;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-size: 15px;
+.dropdown div {
+  padding: 8px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
 }
 
-.add-row:hover {
-  background-color: #005a9e;
+.dropdown div:hover {
+  background: #f0f0f0;
+}
+
+.dropdown .danger {
+  color: #d83b01;
 }
 
