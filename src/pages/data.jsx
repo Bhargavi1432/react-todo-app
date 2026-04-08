@@ -1,297 +1,220 @@
-import { useState, useEffect } from "react";
+import * as XLSX from "xlsx";
+import * as pdfjsLib from "pdfjs-dist";
 import "./data.css";
+import { useState, useEffect } from "react";
 
-export default function Data() {
-  const headings = [
-    "ID",
-    "Subscription Id",
-    "MSISDN",
-    "ICCID",
-    "IMSI",
-    "Activation Date",
-    "Subscriber Creation Date",
-    "Subscriber Plan Name",
-    "Product Type",
-    "Business Unit Name",
-    "Product Status",
-    "Actions"
-  ];
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
+const emptyRow = {
+  id: "",
+  subscriptionId: "",
+  msisdn: "",
+  iccid: "",
+  imsi: "",
+  activationDate: "",
+  creationDate: "",
+  planName: "",
+  productType: "",
+  businessUnit: "",
+  status: "",
+  currentDate: Date.now(),
+};
+
+const toEpoch = (dateStr) =>
+  dateStr ? new Date(dateStr).getTime() : "";
+
+const fromEpoch = (epoch) =>
+  epoch ? new Date(epoch).toLocaleString() : "";
+
+export default function App() {
   const [rows, setRows] = useState([]);
-  const [openMenuIndex, setOpenMenuIndex] = useState(null);
+  const [editingIndex, setEditingIndex] = useState(null);
 
+  /* ✅ ✅ ✅ ONLY ADDITION — DO NOT REMOVE */
   useEffect(() => {
-    loadSubscriptions();
+    const fetchSimData = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/get-sim-data");
+        const data = await response.json();
+        setRows(data);
+      } catch (error) {
+        console.error("Failed to fetch SIM data", error);
+      }
+    };
+
+    fetchSimData();
   }, []);
+  /* ✅ ✅ ✅ END OF ADDITION */
 
-  const loadSubscriptions = async () => {
-    const res = await fetch("http://localhost:5000/subscriptions");
-    const data = await res.json();
-
-    const formatted = data.map((r) => ({
-      ...r,
-      isEditing: false,
-      activationDate: r.activationDate
-        ? new Date(r.activationDate * 1000).toISOString().split("T")[0]
-        : "",
-      creationDate: r.creationDate
-        ? new Date(r.creationDate * 1000).toISOString().split("T")[0]
-        : ""
-    }));
-
-    setRows(formatted);
-  };
-
-  // ➕ Add new row
   const addRow = () => {
-    setRows([
-      {
-        id: null,
-        subscriptionId: "",
-        msisdn: "",
-        iccid: "",
-        imsi: "",
-        activationDate: "",
-        creationDate: "",
-        planName: "",
-        productType: "",
-        businessUnit: "",
-        status: "",
-        isEditing: true
-      },
-      ...rows
-    ]);
+    setRows([...rows, { ...emptyRow, id: rows.length + 1 }]);
+    setEditingIndex(rows.length);
   };
 
-  // 📤 Upload file
-  const uploadFile = async (file) => {
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    await fetch("http://localhost:5000/upload-subscription-file", {
-      method: "POST",
-      body: formData
-    });
-
-    await loadSubscriptions();
-    alert("File uploaded and data loaded ✅");
+  const deleteRow = (index) => {
+    setRows(rows.filter((_, i) => i !== index));
   };
 
   const handleChange = (index, field, value) => {
     const updated = [...rows];
-    updated[index][field] = value;
+    updated[index][field] =
+      field.includes("Date") ? toEpoch(value) : value;
     setRows(updated);
   };
 
-  // 💾 Save
-  const saveRow = async (row, index) => {
-    const payload = {
-      subscriptionId: row.subscriptionId,
-      msisdn: row.msisdn,
-      iccid: row.iccid,
-      imsi: row.imsi,
-      activationDate: row.activationDate
-        ? Math.floor(new Date(row.activationDate).getTime() / 1000)
-        : null,
-      creationDate: row.creationDate
-        ? Math.floor(new Date(row.creationDate).getTime() / 1000)
-        : null,
-      planName: row.planName,
-      productType: row.productType,
-      businessUnit: row.businessUnit,
-      status: row.status
-    };
+  /* ================= FILE UPLOAD ================= */
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    const res = await fetch("http://localhost:5000/subscriptions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(sheet);
 
-    const data = await res.json();
+      const mapped = json.map((item, i) => ({
+        id: item["Id"] || i + 1,
+        subscriptionId: item["Subscription Id"] || "",
+        msisdn: item["MSISDN"] || "",
+        iccid: item["ICCID"] || "",
+        imsi: item["IMSI"] || "",
+        activationDate: toEpoch(item["Activation Date"]),
+        creationDate: toEpoch(item["Subscriber Creation Date"]),
+        planName: item["Subscriber Plan Name"] || "",
+        productType: item["Product Type"] || "",
+        businessUnit: item["Business Unit Name"] || "",
+        status: item["Product Status"] || "",
+        currentDate: Date.now(),
+      }));
 
-    const updated = [...rows];
-    updated[index].id = data.id;
-    updated[index].isEditing = false;
-    setRows(updated);
+      setRows(mapped);
+    }
 
-    alert("Saved ✅");
+    if (file.name.endsWith(".pdf")) {
+      const reader = new FileReader();
+      reader.onload = async function () {
+        const pdf = await pdfjsLib.getDocument(reader.result).promise;
+        const page = await pdf.getPage(1);
+        const content = await page.getTextContent();
+
+        const text = content.items.map((i) => i.str).join(" ");
+
+        setRows([
+          {
+            ...emptyRow,
+            id: 1,
+            planName: text,
+            currentDate: Date.now(),
+          },
+        ]);
+      };
+      reader.readAsArrayBuffer(file);
+    }
   };
 
-  // ✅ Update
-  const updateRow = async (row, index) => {
-    const payload = {
-      subscriptionId: row.subscriptionId,
-      msisdn: row.msisdn,
-      iccid: row.iccid,
-      imsi: row.imsi,
-      activationDate: row.activationDate
-        ? Math.floor(new Date(row.activationDate).getTime() / 1000)
-        : null,
-      creationDate: row.creationDate
-        ? Math.floor(new Date(row.creationDate).getTime() / 1000)
-        : null,
-      planName: row.planName,
-      productType: row.productType,
-      businessUnit: row.businessUnit,
-      status: row.status
-    };
+  /* ================= SAVE TO BACKEND ================= */
+  const saveToDatabase = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/save-sim-data",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(rows),
+        }
+      );
 
-    await fetch(`http://localhost:5000/subscriptions/${row.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const updated = [...rows];
-    updated[index].isEditing = false;
-    setRows(updated);
-
-    alert("Updated ✅");
-  };
-
-  // 🗑 Delete
-  const deleteRow = async (id, index) => {
-    if (!window.confirm("Are you sure you want to delete?")) return;
-
-    await fetch(`http://localhost:5000/subscriptions/${id}`, {
-      method: "DELETE"
-    });
-
-    const updated = [...rows];
-    updated.splice(index, 1);
-    setRows(updated);
-
-    alert("Deleted ✅");
+      const result = await response.json();
+      alert(result.message || "Saved");
+    } catch (error) {
+      console.error("Save failed:", error);
+      alert("Backend connection failed");
+    }
   };
 
   return (
-    <div className="data-container">
+    <div className="container">
+      <div className="toolbar">
+        <button className="btn add" onClick={addRow}>
+          + Add Row
+        </button>
 
-      <h2 className="page-title">Subscriptions</h2>
-
-      {/* Top actions */}
-      <div className="table-actions">
-        <button onClick={addRow}>➕ Add Row</button>
-
-        <label className="upload-btn">
-          📤 Upload File
-          <input
-            type="file"
-            hidden
-            accept=".xlsx,.xls,.pdf"
-            onChange={(e) => uploadFile(e.target.files[0])}
-          />
+        <label className="btn upload">
+          Upload Excel / PDF
+          <input type="file" hidden onChange={handleFileUpload} />
         </label>
+
+        <button className="btn save" onClick={saveToDatabase}>
+          Save to Database
+        </button>
       </div>
 
-      {/* Scroll wrapper */}
-      <div className="table-scroll">
-        <div className="data-row headings">
-          {headings.map((h, i) => (
-            <div key={i} className="data-cell">{h}</div>
+      <div className="table">
+        <div className="table-header">
+          {[
+            "Id",
+            "Subscription ID",
+            "MSISDN",
+            "ICCID",
+            "IMSI",
+            "Activation Date",
+            "Creation Date",
+            "Plan Name",
+            "Product Type",
+            "Business Unit",
+            "Status",
+            "Current Date",
+            "Actions",
+          ].map((h) => (
+            <div key={h} className="th">{h}</div>
           ))}
         </div>
 
         {rows.map((row, index) => (
-          <div key={index} className="data-row">
+          <div className="table-row card" key={index}>
+            {Object.keys(emptyRow).map((field) => (
+              <div className="td" key={field}>
+                {editingIndex === index && field !== "currentDate" ? (
+                  <input
+                    type={field.includes("Date") ? "datetime-local" : "text"}
+                    value={
+                      field.includes("Date") && row[field]
+                        ? new Date(row[field]).toISOString().slice(0, 16)
+                        : row[field] || ""
+                    }
+                    onChange={(e) =>
+                      handleChange(index, field, e.target.value)
+                    }
+                  />
+                ) : field.includes("Date") ? (
+                  fromEpoch(row[field])
+                ) : (
+                  row[field]
+                )}
+              </div>
+            ))}
 
-            <div className="data-cell">{row.id ?? "NEW"}</div>
-
-            <div className="data-cell">
-              <input disabled={!row.isEditing} value={row.subscriptionId}
-                onChange={(e) => handleChange(index, "subscriptionId", e.target.value)} />
-            </div>
-
-            <div className="data-cell">
-              <input disabled={!row.isEditing} value={row.msisdn}
-                onChange={(e) => handleChange(index, "msisdn", e.target.value)} />
-            </div>
-
-            <div className="data-cell">
-              <input disabled={!row.isEditing} value={row.iccid}
-                onChange={(e) => handleChange(index, "iccid", e.target.value)} />
-            </div>
-
-            <div className="data-cell">
-              <input disabled={!row.isEditing} value={row.imsi}
-                onChange={(e) => handleChange(index, "imsi", e.target.value)} />
-            </div>
-
-            <div className="data-cell">
-              <input type="date" disabled={!row.isEditing} value={row.activationDate}
-                onChange={(e) => handleChange(index, "activationDate", e.target.value)} />
-            </div>
-
-            <div className="data-cell">
-              <input type="date" disabled={!row.isEditing} value={row.creationDate}
-                onChange={(e) => handleChange(index, "creationDate", e.target.value)} />
-            </div>
-
-            <div className="data-cell">
-              <input disabled={!row.isEditing} value={row.planName}
-                onChange={(e) => handleChange(index, "planName", e.target.value)} />
-            </div>
-
-            <div className="data-cell">
-              <input disabled={!row.isEditing} value={row.productType}
-                onChange={(e) => handleChange(index, "productType", e.target.value)} />
-            </div>
-
-            <div className="data-cell">
-              <input disabled={!row.isEditing} value={row.businessUnit}
-                onChange={(e) => handleChange(index, "businessUnit", e.target.value)} />
-            </div>
-
-            <div className="data-cell">
-              <select disabled={!row.isEditing} value={row.status}
-                onChange={(e) => handleChange(index, "status", e.target.value)}>
-                <option value="">Select</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
+            <div className="td">
+              <select
+                onChange={(e) => {
+                  if (e.target.value === "edit")
+                    setEditingIndex(index);
+                  if (e.target.value === "save")
+                    setEditingIndex(null);
+                  if (e.target.value === "delete")
+                    deleteRow(index);
+                }}
+              >
+                <option>Actions</option>
+                <option value="edit">Edit</option>
+                <option value="save">Update</option>
+                <option value="delete">Delete</option>
               </select>
             </div>
-
-            <div className="data-cell action-cell">
-              <button
-                className="menu-btn"
-                onClick={() => setOpenMenuIndex(openMenuIndex === index ? null : index)}
-              >
-                ⋮
-              </button>
-
-              {openMenuIndex === index && (
-                <div className="dropdown">
-                  {!row.isEditing && (
-                    <div onClick={() => {
-                      const updated = [...rows];
-                      updated[index].isEditing = true;
-                      setRows(updated);
-                      setOpenMenuIndex(null);
-                    }}>
-                      ✏️ Edit
-                    </div>
-                  )}
-
-                  {row.isEditing && !row.id && (
-                    <div onClick={() => saveRow(row, index)}>💾 Save</div>
-                  )}
-
-                  {row.isEditing && row.id && (
-                    <div onClick={() => updateRow(row, index)}>✅ Update</div>
-                  )}
-
-                  {row.id && (
-                    <div className="danger" onClick={() => deleteRow(row.id, index)}>
-                      🗑 Delete
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
           </div>
         ))}
       </div>
