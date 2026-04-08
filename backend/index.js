@@ -1,16 +1,19 @@
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2");
+const multer = require("multer");
+const XLSX = require("xlsx");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔹 DB connection
+/* ================= DB CONNECTION ================= */
+
 const db = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "Password", // replace with your password
+  password: "Bhagi@159/",
   database: "todo_app"
 });
 
@@ -19,9 +22,110 @@ db.connect((err) => {
   else console.log("✅ MySQL Connected");
 });
 
-// ================= AUTH ================= //
+/* ================= MULTER CONFIG ================= */
 
-// LOGIN
+const upload = multer({ dest: "uploads/" });
+
+/* ================= FILE UPLOAD (ONLY READ) ================= */
+
+app.post("/upload-subscription-file", upload.single("file"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  const workbook = XLSX.readFile(req.file.path);
+  const sheetName = workbook.SheetNames[0];
+  const sheetData = XLSX.utils.sheet_to_json(
+    workbook.Sheets[sheetName],
+    { defval: "" }
+  );
+
+  res.json({
+    success: true,
+    filename: req.file.filename,
+    data: sheetData
+  });
+});
+
+/* ================= SAVE SIM DATA (DUPLICATES IGNORED ✅) ================= */
+
+app.post("/save-sim-data", (req, res) => {
+  const rows = req.body;
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return res.status(400).json({ error: "No data received" });
+  }
+
+  const sql = `
+    INSERT IGNORE INTO sim_configured_details
+    (subscription_id, msisdn, iccid, imsi,
+     activation_date, creation_date,
+     plan_name, product_type,
+     business_unit, status,
+     current_epoch)
+    VALUES ?
+  `;
+
+  const values = rows.map(row => [
+    row.subscriptionId,
+    row.msisdn,
+    row.iccid,
+    row.imsi,
+    row.activationDate,
+    row.creationDate,
+    row.planName,
+    row.productType,
+    row.businessUnit,
+    row.status,
+    row.currentDate
+  ]);
+
+  db.query(sql, [values], (err, result) => {
+    if (err) {
+      console.error("❌ Insert Error:", err);
+      return res.status(500).json({ error: err.sqlMessage });
+    }
+
+    res.json({
+      success: true,
+      inserted: result.affectedRows,
+      message: "✅ Data saved (duplicates ignored)"
+    });
+  });
+});
+
+/* ================= FETCH SIM DATA ================= */
+
+app.get("/get-sim-data", (req, res) => {
+  const sql = `
+    SELECT
+      id,
+      subscription_id AS subscriptionId,
+      msisdn,
+      iccid,
+      imsi,
+      activation_date AS activationDate,
+      creation_date AS creationDate,
+      plan_name AS planName,
+      product_type AS productType,
+      business_unit AS businessUnit,
+      status,
+      current_epoch AS currentDate
+    FROM sim_configured_details
+    ORDER BY id DESC
+  `;
+
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.error("❌ Fetch Error:", err);
+      return res.status(500).json(err);
+    }
+    res.json(result);
+  });
+});
+
+/* ================= AUTH ================= */
+
 app.post("/login", (req, res) => {
   const { userid, password } = req.body;
 
@@ -40,7 +144,6 @@ app.post("/login", (req, res) => {
   );
 });
 
-// REGISTER
 app.post("/register", (req, res) => {
   const { username, firstname, lastname, email, userid, password } = req.body;
 
@@ -49,15 +152,13 @@ app.post("/register", (req, res) => {
     [username, firstname, lastname, email, userid, password],
     (err) => {
       if (err) return res.status(500).send(err);
-
       res.json({ message: "User registered ✅" });
     }
   );
 });
 
-// ================= TASKS ================= //
+/* ================= TASKS ================= */
 
-// ➕ ADD TASK (due_date stored as epoch BIGINT)
 app.post("/tasks", (req, res) => {
   const { user_id, title, category, priority, due_date } = req.body;
 
@@ -67,20 +168,16 @@ app.post("/tasks", (req, res) => {
 
   db.query(
     `INSERT INTO tasks 
-    (user_id, title, category, priority, due_date, status, is_deleted, created_at)
-    VALUES (?, ?, ?, ?, ?, 'pending', 0, ?)`,
+     (user_id, title, category, priority, due_date, status, is_deleted, created_at)
+     VALUES (?, ?, ?, ?, ?, 'pending', 0, ?)`,
     [user_id, title, category, priority, due_date, Date.now()],
     (err) => {
-      if (err) {
-        console.error("SQL Error:", err);
-        return res.status(500).json({ error: err.sqlMessage });
-      }
+      if (err) return res.status(500).json({ error: err.sqlMessage });
       res.json({ success: true });
     }
   );
 });
 
-// 📥 GET TASKS
 app.get("/tasks/:userId", (req, res) => {
   db.query(
     "SELECT * FROM tasks WHERE user_id=? AND is_deleted=0",
@@ -92,7 +189,6 @@ app.get("/tasks/:userId", (req, res) => {
   );
 });
 
-// 🔄 UPDATE TASK (flexible route)
 app.put("/tasks/:id", (req, res) => {
   const { id } = req.params;
   const { status, title, category, priority, due_date, is_deleted } = req.body;
@@ -100,13 +196,7 @@ app.put("/tasks/:id", (req, res) => {
   let fields = [];
   let values = [];
 
-  if (status !== undefined) {
-    if (!["pending", "completed", "not_completed"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status value" });
-    }
-    fields.push("status=?");
-    values.push(status);
-  }
+  if (status !== undefined) { fields.push("status=?"); values.push(status); }
   if (title !== undefined) { fields.push("title=?"); values.push(title); }
   if (category !== undefined) { fields.push("category=?"); values.push(category); }
   if (priority !== undefined) { fields.push("priority=?"); values.push(priority); }
@@ -121,123 +211,13 @@ app.put("/tasks/:id", (req, res) => {
   values.push(id);
 
   db.query(sql, values, (err) => {
-    if (err) {
-      console.error("SQL Error:", err);
-      return res.status(500).json({ error: err.sqlMessage });
-    }
+    if (err) return res.status(500).json({ error: err.sqlMessage });
     res.json({ success: true });
   });
 });
 
-// ================= SUBSCRIPTIONS ================= //
+/* ================= SERVER ================= */
 
-// ➕ ADD SUBSCRIPTION (activationDate & creationDate stored as epoch BIGINT)
-app.post("/subscriptions", (req, res) => {
-  const {
-    subscriptionId, msisdn, iccid, imsi,
-    activationDate, creationDate,
-    planName, productType, businessUnit,
-    status, file
-  } = req.body;
-
-  // Only enforce truly essential fields
-  if (!subscriptionId || !msisdn) {
-    return res.status(400).json({ error: "Subscription ID and MSISDN are required" });
-  }
-
-  const sql = `
-    INSERT INTO subscriptions
-    (subscriptionId, msisdn, iccid, imsi, activationDate, creationDate,
-     planName, productType, businessUnit, status, file)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
-
-  db.query(sql, [
-    subscriptionId, msisdn, iccid || null, imsi || null,
-    activationDate || null, creationDate || null,
-    planName || null, productType || null, businessUnit || null,
-    status || null, file || null
-  ], (err, result) => {
-    if (err) {
-      console.error("SQL Error:", err);
-      return res.status(500).json({ error: err.sqlMessage });
-    }
-    res.json({ success: true, id: result.insertId });
-  });
-});
-
-// 📥 GET SUBSCRIPTIONS
-app.get("/subscriptions", (req, res) => {
-  db.query("SELECT * FROM subscriptions", (err, result) => {
-    if (err) return res.status(500).send(err);
-    res.json(result);
-  });
-});
-
-// 🔄 UPDATE SUBSCRIPTION
-app.put("/subscriptions/:id", (req, res) => {
-  const { id } = req.params;
-  const {
-    subscriptionId, msisdn, iccid, imsi,
-    activationDate, creationDate,
-    planName, productType, businessUnit,
-    status, file
-  } = req.body;
-
-  let fields = [];
-  let values = [];
-
-  if (subscriptionId !== undefined) { fields.push("subscriptionId=?"); values.push(subscriptionId); }
-  if (msisdn !== undefined) { fields.push("msisdn=?"); values.push(msisdn); }
-  if (iccid !== undefined) { fields.push("iccid=?"); values.push(iccid); }
-  if (imsi !== undefined) { fields.push("imsi=?"); values.push(imsi); }
-  if (activationDate !== undefined) { fields.push("activationDate=?"); values.push(activationDate); }
-  if (creationDate !== undefined) { fields.push("creationDate=?"); values.push(creationDate); }
-  if (planName !== undefined) { fields.push("planName=?"); values.push(planName); }
-  if (productType !== undefined) { fields.push("productType=?"); values.push(productType); }
-  if (businessUnit !== undefined) { fields.push("businessUnit=?"); values.push(businessUnit); }
-  if (status !== undefined) { fields.push("status=?"); values.push(status); }
-  if (file !== undefined) { fields.push("file=?"); values.push(file); }
-
-  if (fields.length === 0) {
-    return res.status(400).json({ error: "No fields to update" });
-  }
-
-  const sql = `UPDATE subscriptions SET ${fields.join(", ")} WHERE id=?`;
-  values.push(id);
-
-  db.query(sql, values, (err) => {
-    if (err) {
-      console.error("SQL Error:", err);
-      return res.status(500).json({ error: err.sqlMessage });
-    }
-    res.json({ success: true });
-  });
-});
-
-// 🗑 DELETE SUBSCRIPTION
-app.delete("/subscriptions/:id", (req, res) => {
-  const { id } = req.params;
-
-  db.query(
-    "DELETE FROM subscriptions WHERE id = ?",
-    [id],
-    (err, result) => {
-      if (err) {
-        console.error("SQL Error:", err);
-        return res.status(500).json({ error: err.sqlMessage });
-      }
-
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ error: "Subscription not found" });
-      }
-
-      res.json({ success: true });
-    }
-  );
-});
-
-// ================= SERVER ================= //
 app.listen(5000, () => {
   console.log("🚀 Server running on port 5000");
 });
