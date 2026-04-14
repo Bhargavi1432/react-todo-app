@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 import * as pdfjsLib from "pdfjs-dist";
 import "./data.css";
 import { useState, useEffect } from "react";
+import Navbar from "../components/Navbar"; // ✅ Import Navbar
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -134,6 +135,9 @@ export default function DataPage() {
 
   return (
     <div className="container">
+      {/* ✅ Navbar at the top */}
+      <Navbar />
+
       {/* 🔹 Toolbar */}
       <div className="toolbar">
         <button className="btn add" onClick={addRow}>
