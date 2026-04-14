@@ -1,7 +1,7 @@
 import { useState } from "react";
 import API from "../services/api";
 import { useNavigate } from "react-router-dom";
-import "./login.css"; // ✅ Import CSS
+import "./login.css";
 
 export default function Login() {
   const [user, setUser] = useState({
@@ -13,31 +13,46 @@ export default function Login() {
     password: "",
   });
   const [isRegister, setIsRegister] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
     if (!user.userid || !user.password) {
-      alert("Please fill all fields");
+      setError("Please fill all fields");
+      setLoading(false);
       return;
     }
+
     try {
       const res = await API.post("/login", {
         userid: user.userid,
         password: user.password,
       });
       if (res.data.success) {
-        localStorage.setItem("user", JSON.stringify(res.data.user));
+        // Store only token or safe user info
+        localStorage.setItem("token", res.data.token);
         navigate("/dashboard");
       } else {
-        alert("Invalid login");
+        setError("Invalid login credentials");
       }
     } catch (error) {
       console.error(error);
-      alert("Server error");
+      setError("Server error. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRegister = async () => {
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
     if (
       !user.username ||
       !user.firstname ||
@@ -46,12 +61,14 @@ export default function Login() {
       !user.userid ||
       !user.password
     ) {
-      alert("Please fill all fields");
+      setError("Please fill all fields");
+      setLoading(false);
       return;
     }
+
     try {
       const res = await API.post("/register", user);
-      alert(res.data.message);
+      setError(res.data.message);
       setIsRegister(false);
       setUser({
         username: "",
@@ -63,79 +80,97 @@ export default function Login() {
       });
     } catch (error) {
       console.error(error);
-      alert("Server error");
+      setError("Server error. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="login-container">
       <div className="login-box">
-        <h2>{isRegister ? "Register Page" : "Login Page"}</h2>
+        <h2>{isRegister ? "Register" : "Login"}</h2>
 
-        {isRegister ? (
-          <>
+        {error && <p className="error-message">{error}</p>}
+
+        <form onSubmit={isRegister ? handleRegister : handleLogin}>
+          {isRegister && (
+            <>
+              <label>
+                Username
+                <input
+                  type="text"
+                  value={user.username}
+                  onChange={(e) =>
+                    setUser({ ...user, username: e.target.value })
+                  }
+                  required
+                />
+              </label>
+              <label>
+                Firstname
+                <input
+                  type="text"
+                  value={user.firstname}
+                  onChange={(e) =>
+                    setUser({ ...user, firstname: e.target.value })
+                  }
+                  required
+                />
+              </label>
+              <label>
+                Lastname
+                <input
+                  type="text"
+                  value={user.lastname}
+                  onChange={(e) =>
+                    setUser({ ...user, lastname: e.target.value })
+                  }
+                  required
+                />
+              </label>
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={user.email}
+                  onChange={(e) => setUser({ ...user, email: e.target.value })}
+                  required
+                />
+              </label>
+            </>
+          )}
+
+          <label>
+            User ID
             <input
-              placeholder="Username"
-              value={user.username}
-              onChange={(e) => setUser({ ...user, username: e.target.value })}
-            />
-            <input
-              placeholder="Firstname"
-              value={user.firstname}
-              onChange={(e) => setUser({ ...user, firstname: e.target.value })}
-            />
-            <input
-              placeholder="Lastname"
-              value={user.lastname}
-              onChange={(e) => setUser({ ...user, lastname: e.target.value })}
-            />
-            <input
-              placeholder="Email"
-              type="email"
-              value={user.email}
-              onChange={(e) => setUser({ ...user, email: e.target.value })}
-            />
-            <input
-              placeholder="User ID"
-              type="number"
+              type="text"
               value={user.userid}
               onChange={(e) => setUser({ ...user, userid: e.target.value })}
+              required
             />
+          </label>
+          <label>
+            Password
             <input
-              placeholder="Password"
               type="password"
               value={user.password}
               onChange={(e) => setUser({ ...user, password: e.target.value })}
+              required
             />
+          </label>
 
-            <button onClick={handleRegister}>Register</button>
-            <p>
-              Already have an account?{" "}
-              <span onClick={() => setIsRegister(false)}>Login</span>
-            </p>
-          </>
-        ) : (
-          <>
-            <input
-              placeholder="User ID"
-              type="number"
-              value={user.userid}
-              onChange={(e) => setUser({ ...user, userid: e.target.value })}
-            />
-            <input
-              placeholder="Password"
-              type="password"
-              value={user.password}
-              onChange={(e) => setUser({ ...user, password: e.target.value })}
-            />
+          <button type="submit" disabled={loading}>
+            {loading ? "Processing..." : isRegister ? "Register" : "Login"}
+          </button>
+        </form>
 
-            <button onClick={handleLogin}>Login</button>
-            <p>
-              Don't have an account?{" "}
-              <span onClick={() => setIsRegister(true)}>Register</span>
-            </p>
-          </>
-        )}
+        <p>
+          {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
+          <span onClick={() => setIsRegister(!isRegister)}>
+            {isRegister ? "Login" : "Register"}
+          </span>
+        </p>
       </div>
     </div>
   );
