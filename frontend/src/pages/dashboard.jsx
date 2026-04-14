@@ -26,7 +26,7 @@ export default function Dashboard() {
     due_date: ""
   });
 
-  // 🔹 Fetch tasks
+  // Fetch tasks
   const getTasks = async () => {
     if (!user) return;
     try {
@@ -42,7 +42,7 @@ export default function Dashboard() {
     getTasks();
   }, []);
 
-  // 🔹 Add new task
+  // Add new task
   const addTask = async () => {
     if (!newTask.title || !newTask.due_date) {
       alert("Please fill Title and Due Date");
@@ -63,7 +63,7 @@ export default function Dashboard() {
     }
   };
 
-  // 🔹 Update task
+  // Update task
   const updateTask = async (id, updates) => {
     try {
       await API.put(`/tasks/${id}`, updates);
@@ -74,20 +74,22 @@ export default function Dashboard() {
     }
   };
 
-  // 🔹 Filtering
+  // Filtering
   let filteredTasks = filter === "all" ? tasks : tasks.filter((t) => t.category === filter);
 
-  // 🔹 Searching
+  // Searching
   filteredTasks = filteredTasks.filter((t) =>
     t.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 🔹 Sorting
+  // Sorting
   if (sortBy === "due_date") {
     filteredTasks = [...filteredTasks].sort((a, b) => a.due_date - b.due_date);
   } else if (sortBy === "priority") {
     const priorityOrder = { high: 3, medium: 2, low: 1 };
-    filteredTasks = [...filteredTasks].sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]);
+    filteredTasks = [...filteredTasks].sort(
+      (a, b) => priorityOrder[b.priority] - priorityOrder[a.priority]
+    );
   } else if (sortBy === "status") {
     filteredTasks = [...filteredTasks].sort((a, b) => (a.status > b.status ? 1 : -1));
   }
@@ -102,15 +104,16 @@ export default function Dashboard() {
         </h2>
       )}
 
-      {/* 🔹 Filters inside Dashboard */}
+      {/* Filters */}
       <div className="filters">
-        <button onClick={() => setFilter("all")}>All</button>
-        <button onClick={() => setFilter("personal")}>Personal</button>
-        <button onClick={() => setFilter("work")}>Work</button>
-        <button onClick={() => setFilter("study")}>Study</button>
+        {["all", "personal", "work", "study"].map((cat) => (
+          <button key={cat} onClick={() => setFilter(cat)}>
+            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+          </button>
+        ))}
       </div>
 
-      {/* 🔹 Add Task */}
+      {/* Add Task */}
       <div className="task-input">
         <input
           placeholder="Task Title"
@@ -147,7 +150,7 @@ export default function Dashboard() {
 
       <hr />
 
-      {/* 🔹 Search + Sort Controls */}
+      {/* Search + Sort Controls */}
       <div className="task-controls">
         <input
           type="text"
@@ -164,14 +167,20 @@ export default function Dashboard() {
         </select>
       </div>
 
-      {/* 🔹 Task List */}
+      {/* Task List */}
       <div className="task-list">
         {filteredTasks.map((task) => {
           const isOverdue = task.due_date && new Date(task.due_date) < new Date();
           return (
             <div
               key={task.id}
-              className={`task-card ${task.status === "completed" ? "completed" : task.status === "not_completed" ? "not-completed" : ""}`}
+              className={`task-card ${
+                task.status === "completed"
+                  ? "completed"
+                  : task.status === "not_completed"
+                  ? "not-completed"
+                  : ""
+              }`}
             >
               {editingTaskId === task.id ? (
                 <>
@@ -197,14 +206,24 @@ export default function Dashboard() {
                   </select>
                   <input
                     type="date"
-                    value={editTask.due_date ? new Date(editTask.due_date).toISOString().split("T")[0] : ""}
+                    value={
+                      editTask.due_date
+                        ? new Date(editTask.due_date).toISOString().split("T")[0]
+                        : ""
+                    }
                     onChange={(e) => setEditTask({ ...editTask, due_date: e.target.value })}
                   />
-                  <button onClick={() => {
-                    const dueDateEpoch = editTask.due_date ? new Date(editTask.due_date).getTime() : null;
-                    updateTask(task.id, { ...editTask, due_date: dueDateEpoch });
-                    setEditingTaskId(null);
-                  }}>Save</button>
+                  <button
+                    onClick={() => {
+                      const dueDateEpoch = editTask.due_date
+                        ? new Date(editTask.due_date).getTime()
+                        : null;
+                      updateTask(task.id, { ...editTask, due_date: dueDateEpoch });
+                      setEditingTaskId(null);
+                    }}
+                  >
+                    Save
+                  </button>
                   <button onClick={() => setEditingTaskId(null)}>✖ Cancel</button>
                 </>
               ) : (
@@ -213,24 +232,47 @@ export default function Dashboard() {
                     <b>{task.title}</b> ({task.category}) - {task.priority}
                   </div>
                   <div className={`task-due-date ${isOverdue ? "overdue" : ""}`}>
-                    Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No due date"}
+                    Due:{" "}
+                    {task.due_date
+                      ? new Date(task.due_date).toLocaleDateString()
+                      : "No due date"}
                   </div>
                 </div>
               )}
 
               <div className="task-actions">
-                <button className="complete" onClick={() => updateTask(task.id, { status: "completed" })}>complete</button>
-                <button className="not-complete" onClick={() => updateTask(task.id, { status: "not_completed" })}>not complete</button>
-                <button className="delete" onClick={() => updateTask(task.id, { is_deleted: 1 })}>delete</button>
-                <button className="edit" onClick={() => {
-                  setEditingTaskId(task.id);
-                  setEditTask({
-                    title: task.title,
-                    category: task.category,
-                    priority: task.priority,
-                    due_date: task.due_date
-                  });
-                }}>edit</button>
+                <button
+                  className="complete"
+                  onClick={() => updateTask(task.id, { status: "completed" })}
+                >
+                  Complete
+                </button>
+                <button
+                  className="not-complete"
+                  onClick={() => updateTask(task.id, { status: "not_completed" })}
+                >
+                  Not Complete
+                </button>
+                <button
+                  className="delete"
+                  onClick={() => updateTask(task.id, { is_deleted: 1 })}
+                >
+                  Delete
+                </button>
+                <button
+                  className="edit"
+                  onClick={() => {
+                    setEditingTaskId(task.id);
+                    setEditTask({
+                      title: task.title,
+                      category: task.category,
+                      priority: task.priority,
+                      due_date: task.due_date
+                    });
+                  }}
+                >
+                  Edit
+                </button>
               </div>
             </div>
           );
