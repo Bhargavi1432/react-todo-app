@@ -1,4 +1,4 @@
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 import "./Navbar.css";
 
 export default function Navbar() {
@@ -6,21 +6,25 @@ export default function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-    navigate("/"); 
+    navigate("/"); // Redirect to login/home after logout
   };
 
   return (
-    <div className="navbar">
+    <nav className="navbar">
       {/* 🔹 Navigation Links */}
       <div className="nav-links">
-        <Link to="/dashboard">Dashboard</Link>
-        <Link to="/data">Data</Link>
+        <NavLink to="/dashboard" className="nav-item">
+          Dashboard
+        </NavLink>
+        <NavLink to="/data" className="nav-item">
+          Data
+        </NavLink>
       </div>
 
-      {/* 🔹 Logout */}
+      {/* 🔹 Logout Button */}
       <button className="logout" onClick={handleLogout}>
         Logout
       </button>
-    </div>
+    </nav>
   );
 }
