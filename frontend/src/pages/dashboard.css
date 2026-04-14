@@ -22,8 +22,9 @@
 
 .task-input button {
   background-color: #1976d2;
-  color: white;
+  color: #fff;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .task-input button:hover {
@@ -33,7 +34,6 @@
 /* 🔹 Filters Section */
 .filters {
   display: flex;
-  justify-content: flex-start;
   gap: 10px;
   margin: 15px 0;
 }
@@ -66,24 +66,7 @@
   justify-content: space-between;
   align-items: center;
   margin: 15px 0;
-  gap: 12px;
-}
-
-.task-controls input[type="text"] {
-  flex: 1;
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.task-controls select {
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  background-color: #f9f9f9;
-  font-size: 14px;
-  cursor: pointer;
+  gap: 14px;
 }
 
 /* 🔹 Task List */
@@ -152,7 +135,7 @@
   border-radius: 4px;
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, opacity 0.2s ease;
 }
 
 .task-actions .complete {
