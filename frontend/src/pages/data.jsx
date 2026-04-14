@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
+/* 🔹 Default Row Structure */
 const emptyRow = {
   id: "",
   subscriptionId: "",
@@ -21,17 +22,15 @@ const emptyRow = {
   currentDate: Date.now(),
 };
 
-const toEpoch = (dateStr) =>
-  dateStr ? new Date(dateStr).getTime() : "";
+/* 🔹 Utility Functions */
+const toEpoch = (dateStr) => (dateStr ? new Date(dateStr).getTime() : "");
+const fromEpoch = (epoch) => (epoch ? new Date(epoch).toLocaleString() : "");
 
-const fromEpoch = (epoch) =>
-  epoch ? new Date(epoch).toLocaleString() : "";
-
-export default function App() {
+export default function DataPage() {
   const [rows, setRows] = useState([]);
   const [editingIndex, setEditingIndex] = useState(null);
 
-  /* ✅ ✅ ✅ ONLY ADDITION — DO NOT REMOVE */
+  /* 🔹 Fetch SIM Data from Backend */
   useEffect(() => {
     const fetchSimData = async () => {
       try {
@@ -45,29 +44,31 @@ export default function App() {
 
     fetchSimData();
   }, []);
-  /* ✅ ✅ ✅ END OF ADDITION */
 
+  /* 🔹 Add Row */
   const addRow = () => {
     setRows([...rows, { ...emptyRow, id: rows.length + 1 }]);
     setEditingIndex(rows.length);
   };
 
+  /* 🔹 Delete Row */
   const deleteRow = (index) => {
     setRows(rows.filter((_, i) => i !== index));
   };
 
+  /* 🔹 Handle Field Change */
   const handleChange = (index, field, value) => {
     const updated = [...rows];
-    updated[index][field] =
-      field.includes("Date") ? toEpoch(value) : value;
+    updated[index][field] = field.includes("Date") ? toEpoch(value) : value;
     setRows(updated);
   };
 
-  /* ================= FILE UPLOAD ================= */
+  /* 🔹 File Upload (Excel / PDF) */
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Excel Upload
     if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
@@ -92,13 +93,13 @@ export default function App() {
       setRows(mapped);
     }
 
+    // PDF Upload
     if (file.name.endsWith(".pdf")) {
       const reader = new FileReader();
       reader.onload = async function () {
         const pdf = await pdfjsLib.getDocument(reader.result).promise;
         const page = await pdf.getPage(1);
         const content = await page.getTextContent();
-
         const text = content.items.map((i) => i.str).join(" ");
 
         setRows([
@@ -114,22 +115,17 @@ export default function App() {
     }
   };
 
-  /* ================= SAVE TO BACKEND ================= */
+  /* 🔹 Save Data to Backend */
   const saveToDatabase = async () => {
     try {
-      const response = await fetch(
-        "http://localhost:5000/save-sim-data",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(rows),
-        }
-      );
+      const response = await fetch("http://localhost:5000/save-sim-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rows),
+      });
 
       const result = await response.json();
-      alert(result.message || "Saved");
+      alert(result.message || "Saved successfully");
     } catch (error) {
       console.error("Save failed:", error);
       alert("Backend connection failed");
@@ -138,6 +134,7 @@ export default function App() {
 
   return (
     <div className="container">
+      {/* 🔹 Toolbar */}
       <div className="toolbar">
         <button className="btn add" onClick={addRow}>
           + Add Row
@@ -153,6 +150,7 @@ export default function App() {
         </button>
       </div>
 
+      {/* 🔹 Table */}
       <div className="table">
         <div className="table-header">
           {[
@@ -170,7 +168,9 @@ export default function App() {
             "Current Date",
             "Actions",
           ].map((h) => (
-            <div key={h} className="th">{h}</div>
+            <div key={h} className="th">
+              {h}
+            </div>
           ))}
         </div>
 
@@ -186,9 +186,7 @@ export default function App() {
                         ? new Date(row[field]).toISOString().slice(0, 16)
                         : row[field] || ""
                     }
-                    onChange={(e) =>
-                      handleChange(index, field, e.target.value)
-                    }
+                    onChange={(e) => handleChange(index, field, e.target.value)}
                   />
                 ) : field.includes("Date") ? (
                   fromEpoch(row[field])
@@ -198,15 +196,13 @@ export default function App() {
               </div>
             ))}
 
+            {/* 🔹 Actions Dropdown */}
             <div className="td">
               <select
                 onChange={(e) => {
-                  if (e.target.value === "edit")
-                    setEditingIndex(index);
-                  if (e.target.value === "save")
-                    setEditingIndex(null);
-                  if (e.target.value === "delete")
-                    deleteRow(index);
+                  if (e.target.value === "edit") setEditingIndex(index);
+                  if (e.target.value === "save") setEditingIndex(null);
+                  if (e.target.value === "delete") deleteRow(index);
                 }}
               >
                 <option>Actions</option>
